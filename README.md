@@ -1,74 +1,57 @@
-# Creator-Intelligence
+# Creator Intelligence Platform
 
-An intelligent data collection and machine learning pipeline to recommend creators to users and brands.
+Production-grade Creator Discovery, Real-time Lookalike Recommendation Engine, and AI Campaign Advisor.
 
-## Project Structure & File Guide
+## Overview
 
-### Data Collection & Scraping Scripts
-- **[`scrape_instagram_posts.py`](file:///home/omkar/Desktop/creator-intelligence/scrape_instagram_posts.py)** *(formerly `app.py`)*: Uses Apify to scrape post-level metadata (captions, likes, comments, timestamps, hashtags) for target Instagram creator accounts into `instagram_posts.csv`.
-- **[`scrape_instagram_profiles.py`](file:///home/omkar/Desktop/creator-intelligence/scrape_instagram_profiles.py)** *(formerly `app4.py`)*: Extracts unique creator handles from `instagram_posts.csv` and scrapes creator-level profile metadata (bio, follower count, business category, verification status) into `creator_profiles.csv`.
-- **[`scrape_youtube_videos.py`](file:///home/omkar/Desktop/creator-intelligence/scrape_youtube_videos.py)** *(formerly `app2.py`)*: Uses Apify to scrape YouTube video titles, views, likes, descriptions, and channel stats into `youtube_videos_new.csv`.
+Creator Intelligence provides brand marketers and agencies with semantic creator discovery, automated lookalike matching, an AI campaign advisor, and adaptive personal recommendations.
 
-### Data Cleaning & Enrichment
-- **[`clean_instagram_posts.py`](file:///home/omkar/Desktop/creator-intelligence/clean_instagram_posts.py)** *(formerly `insta.py`)*: Deduplicates and cleans raw Instagram post records into `instagram_posts_cleaned.csv`.
-- **[`enrich_instagram_posts.py`](file:///home/omkar/Desktop/creator-intelligence/enrich_instagram_posts.py)** *(formerly `app3.py`)*: Merges Instagram posts with creator profile data, computing engagement rate, post engagement score, and post age into `posts_enriched.csv`.
-- **[`inspect_youtube_videos.py`](file:///home/omkar/Desktop/creator-intelligence/inspect_youtube_videos.py)** *(formerly `youtube.py`)*: Inspects and prints summary statistics for YouTube video datasets.
+## Core Features
 
-### Exploration & Notebooks
-- **[`explore_instagram_posts.ipynb`](file:///home/omkar/Desktop/creator-intelligence/explore_instagram_posts.ipynb)** *(formerly `insta.ipynb`)*: Jupyter notebook for exploratory data analysis on Instagram posts.
+- **Professional Light UI**: Modern, clean interface designed for marketing clarity without visual clutter or dark neon themes.
+- **Unified User Dashboard**: Real-time influencer search and interactive AI chatbot seamlessly integrated into a single view.
+- **Adaptive 5-Creator Recommendation System**: Returns exactly 5 personalized creator recommendations that evolve with every search query and conversation topic.
+- **AI Campaign Advisor**: Powered by LLM reasoning with catalog grounding to suggest creators, optimize outreach, and synthesize campaign goals.
+- **Multi-Role Authentication**: Dedicated portals and controls for Brands/Users, Content Creators, and Administrators.
+- **Decoupled Database Architecture (`database.py`)**: Pure DAO service layer wrapping SQLite for users, search history, chat logs, user profile summaries, and creator catalog records.
+- **Autonomous Recommendation Service (`recommendation.py`)**: Vector retrieval pipeline combining TF-IDF cosine similarity, normalized engagement rates, and personalized context queries.
 
-### Machine Learning & Recommendation
-- **[`creator_recommender.py`](file:///home/omkar/Desktop/creator-intelligence/creator_recommender.py)**: Embedding-based recommendation engine. Uses TF-IDF & Cosine Similarity with multi-factor scoring (relevance + engagement rate + follower tiers) to recommend creators by natural language query or find creators similar to a given handle.
-- **[`add_new_creator.py`](file:///home/omkar/Desktop/creator-intelligence/add_new_creator.py)**: Dynamic ingestion script. Scrapes a new creator via Apify (or accepts profile inputs) and immediately updates both `creator_profiles.csv` and the vector index without requiring full model retraining.
-- **[`test_recommender.py`](file:///home/omkar/Desktop/creator-intelligence/test_recommender.py)**: Comprehensive evaluation suite measuring Precision@K, Mean Reciprocal Rank (MRR), lookalike co-domain accuracy, and filter compliance.
+## Architecture & File Guide
 
-### Data Files
-- **[`top_insta_influencers_data.csv`](file:///home/omkar/Desktop/creator-intelligence/top_insta_influencers_data.csv)**: Top 200 global Instagram influencers with engagement rates, followers, and country.
-- **[`creator_profiles.csv`](file:///home/omkar/Desktop/creator-intelligence/creator_profiles.csv)**: Creator-level profile metrics (followers, bio, category, verified status).
-- **[`instagram_posts.csv`](file:///home/omkar/Desktop/creator-intelligence/instagram_posts.csv)**: Post-level Instagram data.
-- **[`instagram_posts_cleaned.csv`](file:///home/omkar/Desktop/creator-intelligence/instagram_posts_cleaned.csv)**: Cleaned Instagram post data.
-- **[`youtube_videos.csv`](file:///home/omkar/Desktop/creator-intelligence/youtube_videos.csv)** / **[`youtube_videos_new.csv`](file:///home/omkar/Desktop/creator-intelligence/youtube_videos_new.csv)**: YouTube video and channel data.
+- `main.py`: FastAPI server exposing authentication routes, search API, chat completions endpoint, and dashboard views.
+- `database.py`: Database operations module managing SQLite schema, user authentication, search history logging, chat records, and creator profiles.
+- `recommendation.py`: Recommendation engine computing query relevance, lookalike similarity, and user-adaptive 5-card recommendations.
+- `creator_recommender.py`: Core vector catalog and TF-IDF similarity model.
+- `add_new_creator.py`: Live ingestion pipeline to scrape or manually register and index new influencers into the vector store.
+- `templates/`:
+  - `login.html`: Multi-role login and registration portal with 1-click demo logins.
+  - `index.html`: Unified Brand/User dashboard containing search discovery, filters, personalized recommendations, and the AI chatbot.
+  - `creator.html`: Creator portal displaying profile metrics, editable credentials, and lookalike peer benchmarks.
+  - `admin.html`: Administrator console featuring platform telemetry, search audit logs, user management, and creator indexing.
+- `static/`:
+  - `css/style.css`: Clean, professional design system with light color palette and typography.
+  - `js/app.js`: Modular client logic managing search execution, recommendation refreshes, chat message streaming, and profile modals.
 
----
+## Quick Start
 
-## How to Run the Application
-
-### 1. Launch the Interactive Web Platform (FastAPI UI)
-Start the complete web application directly:
+### 1. Run the Web Application
 ```bash
 python main.py
 ```
-Open **[http://127.0.0.1:8000](http://127.0.0.1:8000)** in your browser to explore creators, run natural language queries, discover lookalikes, and dynamically add new creators! Interactive Swagger API docs are available at **[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)**.
+Access the application at [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
----
+### 2. Default Demo Accounts
 
-## Command Line Usage
+| Role | Username | Password | Default Portal |
+|---|---|---|---|
+| Brand / User | `user` | `user123` | Discovery & AI Chat Dashboard (`/`) |
+| Creator | `creator` | `creator123` | Creator Profile & Lookalikes (`/creator`) |
+| Administrator | `admin` | `admin123` | Admin Telemetry & Indexing Console (`/admin`) |
 
-### 2. Recommend Creators by Natural Language Query
-Search for creators matching a specific campaign, niche, or topic:
-```bash
-python creator_recommender.py --query "emotional storytelling and street portrait photography"
-python creator_recommender.py --query "smartphones gadgets tech reviews" --tier "Micro"
-```
+You can also use the 1-click demo login buttons directly on the login page or register a new user account.
 
-### 2. Find Creators Similar to a Target Creator
-Discover lookalike creators matching an existing creator's tone and audience:
-```bash
-python creator_recommender.py --similar humansofny
-```
+### 3. Recommendation Workflow
 
-### 3. Dynamically Add a New Influencer
-Add any new creator (live via Apify or manual input). They become immediately searchable without retraining:
-```bash
-# Using Apify live scraping (requires APIFY_TOKEN):
-python add_new_creator.py mkbhd --token your_apify_token
-
-# Or manual input:
-python add_new_creator.py fit_sarah \
-  --name "Sarah Fitness" \
-  --category "Fitness & Health" \
-  --bio "HIIT workouts, healthy meal prep, daily motivation" \
-  --followers 120000 \
-  --eng_rate 0.048 \
-  --hashtags "#fitness #workout #mealprep #health"
-```
+1. **Initial Login**: Users without search history receive 5 curated, top-performing creators across diverse catalog categories.
+2. **Search Execution**: Queries are stored in the database, matching creators are presented in the discovery list, and the 5 recommendations adapt immediately.
+3. **Conversational Advisory**: Interacting with the AI advisor updates user preference keywords and synthesizes the recommendations in real time.
