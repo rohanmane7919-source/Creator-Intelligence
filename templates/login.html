@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Creator Intelligence Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <div class="auth-brand">
+                <div class="auth-icon">
+                    <i data-lucide="sparkles"></i>
+                </div>
+                <h1 class="auth-title">Creator Intelligence</h1>
+                <p class="auth-desc">Influencer Discovery & AI Recommendation Engine</p>
+            </div>
+
+            <div class="role-tabs">
+                <button type="button" class="role-tab-btn active" data-role="user" id="tabUser">Brand / User</button>
+                <button type="button" class="role-tab-btn" data-role="creator" id="tabCreator">Creator</button>
+                <button type="button" class="role-tab-btn" data-role="admin" id="tabAdmin">Admin</button>
+            </div>
+
+            <div id="authAlert" style="display: none; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.8rem; margin-bottom: 1rem;"></div>
+
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label class="form-label" for="loginUsername">Username</label>
+                    <input type="text" id="loginUsername" class="form-input" placeholder="Enter your username" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" id="loginSubmitBtn">
+                    <span>Sign In to Dashboard</span>
+                    <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
+                </button>
+            </form>
+
+            <form id="signupForm" class="auth-form" style="display: none;">
+                <div class="form-group">
+                    <label class="form-label" for="signupUsername">Username</label>
+                    <input type="text" id="signupUsername" class="form-input" placeholder="Choose a username" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="signupEmail">Email Address</label>
+                    <input type="email" id="signupEmail" class="form-input" placeholder="name@company.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" class="form-input" placeholder="Create a secure password" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" id="signupSubmitBtn">
+                    <span>Create Account</span>
+                    <i data-lucide="user-plus" style="width: 16px; height: 16px;"></i>
+                </button>
+            </form>
+
+            <div class="demo-box">
+                <div class="demo-title">Quick 1-Click Demo Login</div>
+                <div class="demo-buttons-row">
+                    <button type="button" class="demo-btn" onclick="quickLogin('user', 'user123', 'user')">Demo User</button>
+                    <button type="button" class="demo-btn" onclick="quickLogin('creator', 'creator123', 'creator')">Demo Creator</button>
+                    <button type="button" class="demo-btn" onclick="quickLogin('admin', 'admin123', 'admin')">Demo Admin</button>
+                </div>
+            </div>
+
+            <div class="auth-switch">
+                <span id="switchText">New to the platform?</span>
+                <a id="toggleAuthMode">Create an account</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentRole = 'user';
+        let isSignup = false;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+
+            const roleButtons = document.querySelectorAll('.role-tab-btn');
+            roleButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    roleButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentRole = btn.getAttribute('data-role');
+                });
+            });
+
+            const toggleAuthLink = document.getElementById('toggleAuthMode');
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            const switchText = document.getElementById('switchText');
+
+            toggleAuthLink.addEventListener('click', () => {
+                isSignup = !isSignup;
+                if (isSignup) {
+                    loginForm.style.display = 'none';
+                    signupForm.style.display = 'flex';
+                    switchText.innerText = 'Already have an account?';
+                    toggleAuthLink.innerText = 'Sign in';
+                } else {
+                    signupForm.style.display = 'none';
+                    loginForm.style.display = 'flex';
+                    switchText.innerText = 'New to the platform?';
+                    toggleAuthLink.innerText = 'Create an account';
+                }
+            });
+
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const uname = document.getElementById('loginUsername').value.trim();
+                const pwd = document.getElementById('loginPassword').value;
+                await performLogin(uname, pwd, currentRole);
+            });
+
+            signupForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const uname = document.getElementById('signupUsername').value.trim();
+                const email = document.getElementById('signupEmail').value.trim();
+                const pwd = document.getElementById('signupPassword').value;
+
+                try {
+                    const res = await fetch('/api/signup', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: uname,
+                            password: pwd,
+                            email: email,
+                            role: currentRole
+                        })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                        showAlert(data.detail || 'Signup failed', true);
+                        return;
+                    }
+                    window.location.href = data.redirect_url || '/';
+                } catch (err) {
+                    showAlert('Network error during registration.', true);
+                }
+            });
+        });
+
+        async function quickLogin(u, p, r) {
+            const roleButtons = document.querySelectorAll('.role-tab-btn');
+            roleButtons.forEach(b => {
+                if (b.getAttribute('data-role') === r) {
+                    b.click();
+                }
+            });
+            document.getElementById('loginUsername').value = u;
+            document.getElementById('loginPassword').value = p;
+            await performLogin(u, p, r);
+        }
+
+        async function performLogin(username, password, role) {
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        role: role
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    showAlert(data.detail || 'Authentication failed. Check credentials.', true);
+                    return;
+                }
+                window.location.href = data.redirect_url || '/';
+            } catch (err) {
+                showAlert('Network error during login.', true);
+            }
+        }
+
+        function showAlert(msg, isError) {
+            const el = document.getElementById('authAlert');
+            if (!el) return;
+            el.style.display = 'block';
+            el.innerText = msg;
+            if (isError) {
+                el.style.backgroundColor = 'var(--danger-bg)';
+                el.style.color = 'var(--danger)';
+                el.style.border = '1px solid #fecaca';
+            } else {
+                el.style.backgroundColor = 'var(--success-bg)';
+                el.style.color = 'var(--success)';
+                el.style.border = '1px solid var(--success-border)';
+            }
+        }
+    </script>
+</body>
+</html>

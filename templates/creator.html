@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creator Portal | Creator Intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="brand">
+                <div class="brand-icon">
+                    <i data-lucide="sparkles"></i>
+                </div>
+                <div>
+                    <div class="brand-title">Creator Intelligence</div>
+                    <div class="brand-subtitle">Creator Analytics & Benchmarking Portal</div>
+                </div>
+            </div>
+
+            <div class="nav-actions">
+                <div class="user-profile-badge">
+                    <div class="user-avatar-small">{{ user.username[0].upper() }}</div>
+                    <span class="user-name-text">{{ user.username }}</span>
+                    <span class="role-tag">{{ user.role }}</span>
+                </div>
+                <a href="/dashboard" class="btn btn-secondary btn-sm">
+                    <i data-lucide="search" style="width: 14px; height: 14px;"></i>
+                    <span>Discovery Dashboard</span>
+                </a>
+                <a href="/logout" class="btn btn-secondary btn-sm">
+                    <i data-lucide="log-out" style="width: 14px; height: 14px;"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-layout">
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="section-title">Creator Profile Overview</h2>
+                    <p class="section-subtitle">Manage your creator credentials and metrics in the recommendation catalog</p>
+                </div>
+                <span class="badge-category">{{ creator.follower_tier }}</span>
+            </div>
+
+            <div class="panel-body">
+                <div style="display: flex; align-items: center; gap: 1.25rem; padding: 1rem; background-color: var(--bg-subtle); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                    <div class="creator-avatar" style="width: 64px; height: 64px; font-size: 1.5rem;">
+                        {{ creator.username[0].upper() }}
+                    </div>
+                    <div>
+                        <h3 style="font-size: 1.2rem; font-weight: 700;">{{ creator.full_name or creator.username }}</h3>
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">@{{ creator.username }} &bull; {{ creator.category }}</div>
+                        <p style="font-size: 0.85rem; margin-top: 0.35rem; color: var(--text-main);">{{ creator.bio or 'No bio provided.' }}</p>
+                    </div>
+                </div>
+
+                <div class="admin-grid" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i data-lucide="users"></i></div>
+                        <div>
+                            <div class="stat-number">{{ "{:,.0f}".format(creator.followers) }}</div>
+                            <div class="stat-name">Total Followers</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i data-lucide="activity"></i></div>
+                        <div>
+                            <div class="stat-number" style="color: var(--success);">{{ "{:.2f}%".format(creator.engagement_rate * 100 if creator.engagement_rate <= 1.0 else creator.engagement_rate) }}</div>
+                            <div class="stat-name">Avg Engagement Rate</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i data-lucide="award"></i></div>
+                        <div>
+                            <div class="stat-number">{{ creator.follower_tier }}</div>
+                            <div class="stat-name">Market Tier</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i data-lucide="tag"></i></div>
+                        <div>
+                            <div class="stat-number" style="font-size: 1.05rem;">{{ creator.category }}</div>
+                            <div class="stat-name">Primary Niche</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1rem;">
+                    <h3 class="section-title" style="margin-bottom: 0.75rem;">Update Creator Profile</h3>
+                    <div id="updateAlert" style="display: none; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.8rem; margin-bottom: 1rem;"></div>
+                    <form id="creatorUpdateForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <input type="hidden" id="creatorUsername" value="{{ creator.username }}">
+                        <div class="form-group">
+                            <label class="form-label" for="creatorFullName">Full Name</label>
+                            <input type="text" id="creatorFullName" class="form-input" value="{{ creator.full_name or '' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="creatorCategory">Category / Niche</label>
+                            <input type="text" id="creatorCategory" class="form-input" value="{{ creator.category or '' }}" required>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label class="form-label" for="creatorBio">Bio / Value Proposition</label>
+                            <textarea id="creatorBio" class="form-input" rows="3">{{ creator.bio or '' }}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="creatorFollowers">Followers Count</label>
+                            <input type="number" id="creatorFollowers" class="form-input" value="{{ creator.followers|int }}" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="creatorEngagement">Engagement Rate (e.g. 0.035 for 3.5%)</label>
+                            <input type="number" id="creatorEngagement" class="form-input" value="{{ creator.engagement_rate }}" step="0.001">
+                        </div>
+                        <div style="grid-column: 1 / -1;">
+                            <button type="submit" class="btn btn-primary" id="saveProfileBtn">
+                                <i data-lucide="save" style="width: 15px; height: 15px;"></i>
+                                <span>Save Changes</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <h3 class="section-title">Similar Creators in Your Niche</h3>
+                    <p class="section-subtitle">Algorithmic lookalike influencers for competitive benchmarking</p>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="recommendations-grid">
+                    {% for l in lookalikes %}
+                        <div class="rec-card">
+                            <div>
+                                <div class="rec-card-header">
+                                    <div class="creator-avatar">{{ l.username[0].upper() }}</div>
+                                    <div class="creator-info">
+                                        <div class="creator-name">{{ l.full_name or l.username }}</div>
+                                        <div class="creator-handle">@{{ l.username }}</div>
+                                    </div>
+                                </div>
+                                <div class="badge-category">{{ l.category }}</div>
+                                <div class="rec-metrics">
+                                    <div class="rec-metric-item">
+                                        <span class="metric-label">Followers</span>
+                                        <span class="metric-value">{{ l.followers_formatted }}</span>
+                                    </div>
+                                    <div class="rec-metric-item">
+                                        <span class="metric-label">Engagement</span>
+                                        <span class="metric-value eng">{{ l.engagement_formatted }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="rec-reason">{{ l.match_reason }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+
+            const form = document.getElementById('creatorUpdateForm');
+            if (!form) return;
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const uname = document.getElementById('creatorUsername').value;
+                const fname = document.getElementById('creatorFullName').value;
+                const cat = document.getElementById('creatorCategory').value;
+                const bio = document.getElementById('creatorBio').value;
+                const followers = parseFloat(document.getElementById('creatorFollowers').value);
+                const eng = parseFloat(document.getElementById('creatorEngagement').value);
+
+                try {
+                    const res = await fetch('/api/creator/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: uname,
+                            full_name: fname,
+                            category: cat,
+                            bio: bio,
+                            followers: followers,
+                            engagement_rate: eng
+                        })
+                    });
+                    const data = await res.json();
+                    const alertEl = document.getElementById('updateAlert');
+                    alertEl.style.display = 'block';
+                    if (res.ok) {
+                        alertEl.style.backgroundColor = 'var(--success-bg)';
+                        alertEl.style.color = 'var(--success)';
+                        alertEl.innerText = 'Profile updated successfully!';
+                    } else {
+                        alertEl.style.backgroundColor = 'var(--danger-bg)';
+                        alertEl.style.color = 'var(--danger)';
+                        alertEl.innerText = data.detail || 'Failed to update profile.';
+                    }
+                } catch (err) {
+                    const alertEl = document.getElementById('updateAlert');
+                    alertEl.style.display = 'block';
+                    alertEl.style.backgroundColor = 'var(--danger-bg)';
+                    alertEl.style.color = 'var(--danger)';
+                    alertEl.innerText = 'Network error while saving profile.';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

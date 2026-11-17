@@ -3,265 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Creator Intelligence | AI Creator Discovery & Lookalike Engine</title>
-    <!-- Google Fonts -->
+    <title>Creator Intelligence | Discovery & AI Recommendations</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <!-- Lucide Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body class="dark-theme">
-    <!-- Navigation Bar -->
+<body>
     <header class="navbar">
         <div class="nav-container">
             <div class="brand">
                 <div class="brand-icon">
                     <i data-lucide="sparkles"></i>
                 </div>
-                <div class="brand-text">
-                    <span class="brand-name">CreatorLens</span>
-                    <span class="brand-tag">Intelligence Engine</span>
+                <div>
+                    <div class="brand-title">Creator Intelligence</div>
+                    <div class="brand-subtitle">Discovery & Recommendation Platform</div>
                 </div>
             </div>
 
-            <div class="nav-stats">
-                <div class="stat-badge">
-                    <span class="pulse-indicator"></span>
-                    <span id="headerCatalogCount">{{ catalog_count }}</span> Creators Indexed
+            <div class="nav-actions">
+                <div class="nav-badge">
+                    <span class="pulse-dot"></span>
+                    <span>{{ catalog_count }} Creators Indexed</span>
                 </div>
-                <button id="openAddModalBtn" class="btn btn-secondary btn-sm">
-                    <i data-lucide="user-plus"></i>
-                    <span>Add Creator</span>
-                </button>
+
+                <div class="user-profile-badge">
+                    <div class="user-avatar-small">{{ user.username[0].upper() }}</div>
+                    <span class="user-name-text">{{ user.username }}</span>
+                    <span class="role-tag">{{ user.role }}</span>
+                </div>
+
+                {% if user.role == 'admin' %}
+                    <a href="/admin" class="btn btn-secondary btn-sm">Admin View</a>
+                {% elif user.role == 'creator' %}
+                    <a href="/creator" class="btn btn-secondary btn-sm">Creator View</a>
+                {% endif %}
+
+                <a href="/logout" class="btn btn-secondary btn-sm">
+                    <i data-lucide="log-out" style="width: 14px; height: 14px;"></i>
+                    <span>Logout</span>
+                </a>
             </div>
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="main-content">
-        <!-- Hero Search Section -->
-        <section class="hero-section">
-            <div class="hero-badge">Next-Gen Influencer Recommendation</div>
-            <h1 class="hero-title">Discover Creators with <span class="gradient-text">Semantic Precision</span></h1>
-            <p class="hero-subtitle">Search by natural language campaign requirements or find algorithmic lookalikes for any creator.</p>
-
-            <!-- Search Mode Tabs -->
-            <div class="search-tabs">
-                <button class="tab-btn active" data-mode="auto" id="tabAuto">
-                    <i data-lucide="zap"></i>
-                    <span>Smart Search</span>
-                </button>
-                <button class="tab-btn" data-mode="query" id="tabQuery">
-                    <i data-lucide="search"></i>
-                    <span>Topic & Niche</span>
-                </button>
-                <button class="tab-btn" data-mode="similar" id="tabSimilar">
-                    <i data-lucide="users"></i>
-                    <span>Lookalike Similar</span>
-                </button>
-            </div>
-
-            <!-- Search Input Box -->
-            <div class="search-box-wrapper">
-                <div class="search-box">
-                    <div class="search-icon">
-                        <i data-lucide="search" id="searchStateIcon"></i>
+    <main class="main-layout">
+        <section class="recommendations-panel">
+            <div class="section-header">
+                <div class="section-title-wrap">
+                    <div class="section-icon-badge">
+                        <i data-lucide="compass" style="width: 16px; height: 16px;"></i>
                     </div>
-                    <input 
-                        type="text" 
-                        id="searchInput" 
-                        placeholder="Try 'football soccer athletes' or 'similar taylorswift'..." 
-                        autocomplete="off"
-                        autofocus
-                    >
-                    <button class="clear-btn" id="clearSearchBtn" title="Clear search">
-                        <i data-lucide="x"></i>
-                    </button>
-                    <button class="filter-toggle-btn" id="toggleFilterBtn" title="Filters">
-                        <i data-lucide="sliders-horizontal"></i>
-                        <span>Filters</span>
-                    </button>
-                    <button class="search-submit-btn" id="searchSubmitBtn">
-                        <span>Search</span>
-                        <i data-lucide="arrow-right"></i>
-                    </button>
+                    <div>
+                        <h2 class="section-title">Recommended For You (5 Creators)</h2>
+                        <p class="section-subtitle">Real-time recommendations automatically updated from your search history and conversations with AI</p>
+                    </div>
                 </div>
-
-                <!-- Intent Detection Banner -->
-                <div class="intent-banner" id="intentBanner" style="display: none;">
-                    <i data-lucide="compass"></i>
-                    <span id="intentText">Mode: Semantic Query</span>
+                <div id="userSummaryBadgeContainer" style="{% if not user_summary %}display: none;{% endif %}">
+                    <span class="badge-category" style="background-color: var(--success-bg); color: var(--success); border: 1px solid var(--success-border);">
+                        Profile Focus: <span id="userSummaryBadge">{{ user_summary }}</span>
+                    </span>
                 </div>
             </div>
+            <div class="recommendations-grid" id="recommendationsGrid">
+                <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: var(--text-muted);">
+                    Loading your personalized recommendations...
+                </div>
+            </div>
+        </section>
 
-            <!-- Filter Panel (Collapsible) -->
-            <div class="filter-panel" id="filterPanel" style="display: none;">
-                <div class="filter-grid">
-                    <div class="filter-group">
-                        <label for="tierSelect">Follower Tier</label>
-                        <select id="tierSelect">
-                            <option value="">All Tiers (Any Followers)</option>
-                            <option value="Nano">Nano (&lt; 10K)</option>
-                            <option value="Micro">Micro (10K - 100K)</option>
-                            <option value="Mid">Mid-Tier (100K - 500K)</option>
-                            <option value="Macro">Macro (500K - 1M)</option>
-                            <option value="Mega">Mega (1M+)</option>
-                        </select>
+        <section class="dashboard-split">
+            <div class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="section-title">Influencer Discovery</h3>
+                        <p class="section-subtitle">Search by category, campaign topic, or lookalike handle</p>
+                    </div>
+                    <span id="searchStatusText" style="font-size: 0.78rem; color: var(--text-muted); font-weight: 500;">
+                        Ready to search
+                    </span>
+                </div>
+
+                <div class="panel-body">
+                    <div class="mode-selector">
+                        <button type="button" class="mode-btn active" data-mode="auto">Topic & Keyword</button>
+                        <button type="button" class="mode-btn" data-mode="similar">Lookalike Similar (e.g. @cristiano)</button>
                     </div>
 
-                    <div class="filter-group">
-                        <label for="categorySelect">Niche Category</label>
-                        <select id="categorySelect">
-                            <option value="">All Niches</option>
-                            {% for cat in categories %}
-                            <option value="{{ cat }}">{{ cat }}</option>
-                            {% endfor %}
-                        </select>
+                    <form id="searchForm" class="search-box-row">
+                        <div class="search-input-wrap">
+                            <span class="search-icon-inside">
+                                <i data-lucide="search" style="width: 16px; height: 16px;"></i>
+                            </span>
+                            <input 
+                                type="text" 
+                                id="searchInput" 
+                                class="search-input" 
+                                placeholder="Search topics, niches, or keywords (e.g. 'fitness and healthy nutrition')..."
+                                autocomplete="off"
+                            >
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="searchSubmitBtn">
+                            <span>Search</span>
+                            <i data-lucide="arrow-right" style="width: 15px; height: 15px;"></i>
+                        </button>
+                    </form>
+
+                    <div class="filter-grid">
+                        <div class="filter-group">
+                            <label class="filter-label" for="categoryFilter">Category</label>
+                            <select id="categoryFilter" class="select-input">
+                                <option value="">All Categories</option>
+                                {% for cat in categories %}
+                                    <option value="{{ cat }}">{{ cat }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label" for="tierFilter">Audience Tier</label>
+                            <select id="tierFilter" class="select-input">
+                                <option value="">All Tiers</option>
+                                <option value="Nano">Nano (&lt;10K)</option>
+                                <option value="Micro">Micro (10K-100K)</option>
+                                <option value="Mid-Tier">Mid-Tier (100K-500K)</option>
+                                <option value="Macro">Macro (500K-1M)</option>
+                                <option value="Mega">Mega (1M+)</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label" for="engagementFilter">Min Engagement</label>
+                            <select id="engagementFilter" class="select-input">
+                                <option value="">Any Engagement</option>
+                                <option value="0.01">&gt; 1.0%</option>
+                                <option value="0.02">&gt; 2.0%</option>
+                                <option value="0.03">&gt; 3.0%</option>
+                                <option value="0.05">&gt; 5.0%</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div class="filter-group">
-                        <label for="topKSelect">Results Limit</label>
-                        <select id="topKSelect">
-                            <option value="5" selected>Top 5 Recommendations</option>
-                            <option value="10">Top 10 Recommendations</option>
-                            <option value="20">Top 20 Recommendations</option>
-                        </select>
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="minEngInput">Min. Engagement Rate</label>
-                        <div class="range-display">
-                            <input type="range" id="minEngInput" min="0" max="10" step="0.5" value="0">
-                            <span id="engValDisplay">0.0%</span>
+                    <div class="search-results-list" id="searchResultsList">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i data-lucide="search" style="width: 36px; height: 36px;"></i>
+                            </div>
+                            <div class="empty-state-title">Explore Creators Across the Catalog</div>
+                            <div class="empty-state-desc">Enter any keyword, niche topic, or target creator handle above to discover influencers with matching audience profiles.</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Quick Presets -->
-            <div class="quick-presets">
-                <span class="preset-label">Trending Searches:</span>
-                <button class="preset-pill" data-query="football soccer athletes">⚽ Footballers</button>
-                <button class="preset-pill" data-query="similar taylorswift">✨ Similar to Taylor Swift</button>
-                <button class="preset-pill" data-query="fashion models cosmetics makeup">💄 Beauty & Style</button>
-                <button class="preset-pill" data-query="similar cristiano">⚡ Like Cristiano</button>
-                <button class="preset-pill" data-query="nature wildlife documentary photography">📸 Nature & Wildlife</button>
-                <button class="preset-pill" data-query="hollywood actors cinema movies">🎬 Hollywood Stars</button>
-                <button class="preset-pill" data-query="cricket players batsmen">🏏 Cricket Legends</button>
-            </div>
-        </section>
-
-        <!-- Results Section -->
-        <section class="results-section" id="resultsSection">
-            <div class="results-header" id="resultsHeader" style="display: none;">
-                <div class="results-title-group">
-                    <h2 class="results-title" id="resultsTitle">Top Recommended Creators</h2>
-                    <span class="results-meta" id="resultsMeta">Found 5 matching creators</span>
+            <div class="panel chat-container">
+                <div class="panel-header">
+                    <div class="chat-header-info">
+                        <div class="brand-icon" style="width: 30px; height: 30px; border-radius: var(--radius-sm);">
+                            <i data-lucide="bot" style="width: 16px; height: 16px;"></i>
+                        </div>
+                        <div>
+                            <h3 class="section-title" style="font-size: 0.95rem;">AI Influencer Assistant</h3>
+                            <p class="section-subtitle">Advises campaigns and suggests influencers</p>
+                        </div>
+                    </div>
+                    <span class="nav-badge" style="padding: 0.2rem 0.55rem; font-size: 0.72rem;">
+                        <span class="pulse-dot"></span>
+                        <span>Online</span>
+                    </span>
                 </div>
-                <div class="results-sort-badge">
-                    <i data-lucide="sparkle"></i>
-                    <span>Ranked by Relevance & Engagement</span>
+
+                <div class="summary-indicator" style="{% if not user_summary %}display: none;{% endif %}">
+                    <i data-lucide="info" style="width: 14px; height: 14px; flex-shrink: 0;"></i>
+                    <span>Preferences learned: <strong id="chatSummaryDisplay">{{ user_summary }}</strong></span>
                 </div>
-            </div>
 
-            <!-- Empty / Default Initial State -->
-            <div class="empty-state" id="emptyState">
-                <div class="empty-icon">
-                    <i data-lucide="sparkles"></i>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message-row ai-msg">
+                        <div class="msg-avatar">
+                            <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i>
+                        </div>
+                        <div class="msg-bubble">
+                            Welcome! I am your AI Creator Intelligence Advisor. Ask me for influencer recommendations, campaign tactics, or audience insights.
+                        </div>
+                    </div>
                 </div>
-                <h3>Start exploring creators</h3>
-                <p>Type a topic like <code>football soccer athletes</code> or click <code>similar taylorswift</code> above.</p>
-            </div>
 
-            <!-- Loading Spinner -->
-            <div class="loading-state" id="loadingState" style="display: none;">
-                <div class="spinner"></div>
-                <p>Analyzing vector embeddings and creator performance...</p>
-            </div>
+                <div class="chat-suggestions">
+                    <button type="button" class="suggestion-pill">Find fitness creators with high engagement</button>
+                    <button type="button" class="suggestion-pill">Suggest tech influencers for product launch</button>
+                    <button type="button" class="suggestion-pill">Who are similar creators to @taylorswift?</button>
+                </div>
 
-            <!-- Cards Grid -->
-            <div class="cards-grid" id="cardsGrid"></div>
+                <form id="chatForm" class="chat-input-area">
+                    <input 
+                        type="text" 
+                        id="chatInput" 
+                        class="chat-input" 
+                        placeholder="Ask AI for creator recommendations or strategy..." 
+                        autocomplete="off"
+                    >
+                    <button type="submit" class="btn btn-primary" id="chatSendBtn">
+                        <i data-lucide="send" style="width: 15px; height: 15px;"></i>
+                    </button>
+                </form>
+            </div>
         </section>
     </main>
 
-    <!-- Modal: Add New Creator -->
-    <div class="modal-overlay" id="addCreatorModal" style="display: none;">
+    <div class="modal-backdrop" id="creatorModal" style="display: none;">
         <div class="modal-card">
             <div class="modal-header">
-                <div class="modal-title-group">
-                    <div class="modal-icon"><i data-lucide="user-plus"></i></div>
-                    <div>
-                        <h3>Add New Creator</h3>
-                        <p class="modal-subtitle">Index any creator to make them recommendable immediately</p>
-                    </div>
-                </div>
-                <button class="close-modal-btn" id="closeAddModalBtn"><i data-lucide="x"></i></button>
+                <span class="modal-title">Creator Intelligence Profile</span>
+                <button type="button" class="modal-close-btn" id="closeModalBtn">
+                    <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+                </button>
             </div>
-
-            <form id="addCreatorForm">
-                <div class="form-group">
-                    <label for="newUsername">Instagram Handle <span class="required">*</span></label>
-                    <div class="input-with-prefix">
-                        <span class="prefix">@</span>
-                        <input type="text" id="newUsername" placeholder="e.g. mkbhd" required>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="newName">Full Name</label>
-                        <input type="text" id="newName" placeholder="Marques Brownlee">
-                    </div>
-                    <div class="form-group">
-                        <label for="newCategory">Category / Niche</label>
-                        <input type="text" id="newCategory" placeholder="Technology & Gadgets">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="newFollowers">Follower Count</label>
-                        <input type="number" id="newFollowers" placeholder="15000000" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="newEngRate">Engagement Rate (%)</label>
-                        <input type="number" id="newEngRate" placeholder="3.5" step="0.1" min="0">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="newBio">Bio & Content Keywords</label>
-                    <textarea id="newBio" rows="3" placeholder="High-quality tech reviews, smartphone camera tests, EV cars and gadget unboxings."></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="newApifyToken">Apify Token (Optional for Live Scraping)</label>
-                    <input type="password" id="newApifyToken" placeholder="Leave blank to use manual inputs">
-                </div>
-
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" id="cancelAddModalBtn">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="submitAddCreatorBtn">
-                        <i data-lucide="plus"></i>
-                        <span>Index Creator</span>
-                    </button>
-                </div>
-            </form>
+            <div class="modal-body" id="modalBody">
+            </div>
         </div>
     </div>
 
-    <!-- Notification Toast -->
-    <div class="toast" id="toastNotification" style="display: none;">
-        <i data-lucide="check-circle" id="toastIcon"></i>
-        <span id="toastMessage">Success</span>
-    </div>
-
-    <!-- App Script -->
     <script src="/static/js/app.js"></script>
-    <script>
-        lucide.createIcons();
-    </script>
 </body>
 </html>

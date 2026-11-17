@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Intelligence Control | Creator Intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="brand">
+                <div class="brand-icon">
+                    <i data-lucide="shield-check"></i>
+                </div>
+                <div>
+                    <div class="brand-title">Admin Console</div>
+                    <div class="brand-subtitle">Platform Management & Vector Telemetry</div>
+                </div>
+            </div>
+
+            <div class="nav-actions">
+                <div class="user-profile-badge">
+                    <div class="user-avatar-small">{{ user.username[0].upper() }}</div>
+                    <span class="user-name-text">{{ user.username }}</span>
+                    <span class="role-tag">{{ user.role }}</span>
+                </div>
+                <a href="/dashboard" class="btn btn-secondary btn-sm">
+                    <i data-lucide="search" style="width: 14px; height: 14px;"></i>
+                    <span>Discovery View</span>
+                </a>
+                <a href="/logout" class="btn btn-secondary btn-sm">
+                    <i data-lucide="log-out" style="width: 14px; height: 14px;"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-layout">
+        <div class="admin-grid">
+            <div class="stat-card">
+                <div class="stat-icon"><i data-lucide="database"></i></div>
+                <div>
+                    <div class="stat-number">{{ stats.total_creators }}</div>
+                    <div class="stat-name">Catalog Creators</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i data-lucide="users"></i></div>
+                <div>
+                    <div class="stat-number">{{ stats.total_users }}</div>
+                    <div class="stat-name">Platform Accounts</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i data-lucide="search"></i></div>
+                <div>
+                    <div class="stat-number">{{ stats.total_searches }}</div>
+                    <div class="stat-name">Searches Executed</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i data-lucide="message-square"></i></div>
+                <div>
+                    <div class="stat-number">{{ stats.total_chats }}</div>
+                    <div class="stat-name">AI Conversations</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <h3 class="section-title">Add & Index New Creator</h3>
+                    <p class="section-subtitle">Add a creator handle to immediately vector-index and make available for recommendations</p>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div id="addCreatorAlert" style="display: none; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.8rem; margin-bottom: 1rem;"></div>
+                <form id="addCreatorForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label" for="newUsername">Instagram / Channel Handle (@)</label>
+                        <input type="text" id="newUsername" class="form-input" placeholder="e.g. mkbhd" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="newName">Full Name</label>
+                        <input type="text" id="newName" class="form-input" placeholder="e.g. Marques Brownlee">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="newCategory">Category / Niche</label>
+                        <input type="text" id="newCategory" class="form-input" placeholder="e.g. Technology & Consumer Gadgets">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="newFollowers">Followers Count</label>
+                        <input type="number" id="newFollowers" class="form-input" placeholder="e.g. 4500000" value="100000">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label" for="newBio">Biography / Content Summary</label>
+                        <textarea id="newBio" class="form-input" rows="2" placeholder="Describe the topics and content pillars..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="newEngagement">Engagement Rate (Decimal, e.g. 0.045 for 4.5%)</label>
+                        <input type="number" id="newEngagement" class="form-input" placeholder="0.035" step="0.001" value="0.035">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="newToken">Optional Live Apify Scraper Token</label>
+                        <input type="text" id="newToken" class="form-input" placeholder="Leave empty for manual entry">
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <button type="submit" class="btn btn-primary" id="addCreatorSubmitBtn">
+                            <i data-lucide="plus" style="width: 15px; height: 15px;"></i>
+                            <span>Index Creator Profile</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem;">
+            <div class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="section-title">Recent User Search Logs</h3>
+                        <p class="section-subtitle">Real-time query inquiries recorded in the database</p>
+                    </div>
+                </div>
+                <div class="panel-body" style="padding: 0; max-height: 400px; overflow-y: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Search Query</th>
+                                <th>Category</th>
+                                <th>Results</th>
+                                <th>Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in recent_searches %}
+                                <tr>
+                                    <td><strong>{{ s.username or 'user_' ~ s.user_id }}</strong></td>
+                                    <td>{{ s.query }}</td>
+                                    <td>{{ s.category or '-' }}</td>
+                                    <td>{{ s.result_count }}</td>
+                                    <td style="color: var(--text-muted); font-size: 0.75rem;">{{ s.created_at }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No searches recorded yet.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="section-title">Registered Accounts</h3>
+                        <p class="section-subtitle">Users, creators, and administrators</p>
+                    </div>
+                </div>
+                <div class="panel-body" style="padding: 0; max-height: 400px; overflow-y: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Role</th>
+                                <th>Email</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for u in users_list %}
+                                <tr>
+                                    <td><strong>{{ u.username }}</strong></td>
+                                    <td><span class="role-tag">{{ u.role }}</span></td>
+                                    <td style="color: var(--text-muted);">{{ u.email or '-' }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+
+            const form = document.getElementById('addCreatorForm');
+            if (!form) return;
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const uname = document.getElementById('newUsername').value.trim();
+                const name = document.getElementById('newName').value.trim();
+                const cat = document.getElementById('newCategory').value.trim();
+                const bio = document.getElementById('newBio').value.trim();
+                const followers = parseFloat(document.getElementById('newFollowers').value) || 0;
+                const eng = parseFloat(document.getElementById('newEngagement').value) || 0;
+                const token = document.getElementById('newToken').value.trim();
+
+                const alertEl = document.getElementById('addCreatorAlert');
+                alertEl.style.display = 'block';
+                alertEl.style.backgroundColor = 'var(--bg-subtle)';
+                alertEl.style.color = 'var(--text-main)';
+                alertEl.innerText = 'Indexing creator into vector store and database...';
+
+                try {
+                    const res = await fetch('/api/admin/add-creator', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: uname,
+                            name: name,
+                            category: cat,
+                            bio: bio,
+                            followers: followers,
+                            engagement_rate: eng,
+                            token: token || null
+                        })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        alertEl.style.backgroundColor = 'var(--success-bg)';
+                        alertEl.style.color = 'var(--success)';
+                        alertEl.innerText = data.message || 'Creator indexed successfully!';
+                        form.reset();
+                    } else {
+                        alertEl.style.backgroundColor = 'var(--danger-bg)';
+                        alertEl.style.color = 'var(--danger)';
+                        alertEl.innerText = data.detail || 'Failed to index creator.';
+                    }
+                } catch (err) {
+                    alertEl.style.backgroundColor = 'var(--danger-bg)';
+                    alertEl.style.color = 'var(--danger)';
+                    alertEl.innerText = 'Network error during indexing.';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
