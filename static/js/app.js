@@ -1,6 +1,17 @@
-document.addEventListener('DOMContentLoaded', () => {
+function safeCreateIcons() {
+    try {
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
+    } catch (e) {
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
     initApp();
-});
+}
 
 let currentSearchMode = 'auto';
 
@@ -10,6 +21,7 @@ function initApp() {
     setupChatSystem();
     setupModalHandlers();
     loadPersonalizedRecommendations();
+    safeCreateIcons();
 }
 
 function setupModeSelector() {
@@ -39,7 +51,7 @@ function setupSearchForm() {
     const tierSelect = document.getElementById('tierFilter');
     const engagementSelect = document.getElementById('engagementFilter');
 
-    if (!searchForm || !searchInput) return;
+    if (!searchInput) return;
 
     const performSearchAction = async () => {
         const query = searchInput.value.trim();
@@ -61,10 +73,12 @@ function setupSearchForm() {
         await executeSearch(payload);
     };
 
-    searchForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await performSearchAction();
-    });
+    if (searchForm) {
+        searchForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await performSearchAction();
+        });
+    }
 
     if (searchSubmitBtn) {
         searchSubmitBtn.addEventListener('click', async (e) => {
@@ -98,12 +112,12 @@ async function executeSearch(payload) {
 
     resultsContainer.innerHTML = `
         <div class="empty-state">
-            <div class="stat-icon" style="margin: 0 auto 0.75rem;"><i data-lucide="loader"></i></div>
+            <div class="stat-icon" style="margin: 0 auto 0.75rem;"><i data-lucide="loader-2"></i></div>
             <div class="empty-state-title">Searching Creator Catalog...</div>
-            <div class="empty-state-desc">Finding optimal matches for your campaign criteria</div>
+            <div class="empty-state-desc">Finding optimal matches for "${escapeHtml(payload.query || payload.category || 'criteria')}"</div>
         </div>
     `;
-    if (window.lucide) lucide.createIcons();
+    safeCreateIcons();
 
     try {
         const res = await fetch('/api/search', {
@@ -137,7 +151,7 @@ function renderSearchResults(creators, query) {
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-state-title">No Creators Found</div>
-                <div class="empty-state-desc">No creators matched your query. Try broadening your criteria or search topic.</div>
+                <div class="empty-state-desc">No creators matched your query "${escapeHtml(query)}". Try broadening your search.</div>
             </div>
         `;
         return;
@@ -161,17 +175,17 @@ function renderSearchResults(creators, query) {
                 </div>
             </div>
             <div class="result-actions">
-                <button class="btn btn-secondary btn-sm" onclick="showCreatorModal('${escapeHtml(c.username)}')">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="showCreatorModal('${escapeHtml(c.username)}')">
                     <span>View Profile</span>
                 </button>
-                <button class="btn btn-primary btn-sm" onclick="searchSimilarCreator('${escapeHtml(c.username)}')">
+                <button type="button" class="btn btn-primary btn-sm" onclick="searchSimilarCreator('${escapeHtml(c.username)}')">
                     <span>Find Similar</span>
                 </button>
             </div>
         </div>
     `).join('');
 
-    if (window.lucide) lucide.createIcons();
+    safeCreateIcons();
 }
 
 async function loadPersonalizedRecommendations() {
@@ -186,8 +200,9 @@ async function loadPersonalizedRecommendations() {
 
         if (summaryBadge && data.user_summary) {
             summaryBadge.innerText = data.user_summary;
-            if (summaryBadge.parentElement && summaryBadge.parentElement.parentElement) {
-                summaryBadge.parentElement.parentElement.style.display = 'inline-flex';
+            const containerEl = document.getElementById('userSummaryBadgeContainer');
+            if (containerEl) {
+                containerEl.style.display = 'inline-flex';
             }
         }
 
@@ -224,7 +239,7 @@ async function loadPersonalizedRecommendations() {
             </div>
         `).join('');
 
-        if (window.lucide) lucide.createIcons();
+        safeCreateIcons();
     } catch (e) {
     }
 }
@@ -236,7 +251,7 @@ function setupChatSystem() {
     const chatMessages = document.getElementById('chatMessages');
     const suggestionPills = document.querySelectorAll('.suggestion-pill');
 
-    if (!chatForm || !chatInput || !chatMessages) return;
+    if (!chatInput || !chatMessages) return;
 
     loadChatHistory();
 
@@ -264,7 +279,8 @@ function setupChatSystem() {
                 const summaryEl = document.getElementById('chatSummaryDisplay');
                 if (summaryEl) {
                     summaryEl.innerText = data.summary;
-                    summaryEl.parentElement.style.display = 'flex';
+                    const summaryWrap = summaryEl.closest('.summary-indicator');
+                    if (summaryWrap) summaryWrap.style.display = 'flex';
                 }
             }
 
@@ -279,10 +295,12 @@ function setupChatSystem() {
         }
     };
 
-    chatForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await sendChatMessage();
-    });
+    if (chatForm) {
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await sendChatMessage();
+        });
+    }
 
     if (chatSendBtn) {
         chatSendBtn.addEventListener('click', async (e) => {
@@ -339,7 +357,7 @@ function renderRecommendationsDirect(recs) {
         </div>
     `).join('');
 
-    if (window.lucide) lucide.createIcons();
+    safeCreateIcons();
 }
 
 async function loadChatHistory() {
@@ -359,7 +377,7 @@ async function loadChatHistory() {
                     </div>
                 </div>
             `;
-            if (window.lucide) lucide.createIcons();
+            safeCreateIcons();
             return;
         }
 
@@ -386,7 +404,7 @@ function appendUserMessage(text) {
         <div class="msg-bubble">${escapeHtml(text)}</div>
     `;
     container.appendChild(row);
-    if (window.lucide) lucide.createIcons();
+    safeCreateIcons();
     container.scrollTop = container.scrollHeight;
 }
 
@@ -416,7 +434,7 @@ function appendAiMessage(text, recommendations) {
         </div>
     `;
     container.appendChild(row);
-    if (window.lucide) lucide.createIcons();
+    safeCreateIcons();
     container.scrollTop = container.scrollHeight;
 }
 
@@ -435,7 +453,7 @@ function appendLoadingIndicator() {
         </div>
     `;
     container.appendChild(row);
-    if (window.lucide) lucide.createIcons();
+    safeCreateIcons();
     container.scrollTop = container.scrollHeight;
     return id;
 }
@@ -521,7 +539,6 @@ async function showCreatorModal(username) {
 
 function searchSimilarCreator(username) {
     const searchInput = document.getElementById('searchInput');
-    const searchForm = document.getElementById('searchForm');
     const modal = document.getElementById('creatorModal');
     if (modal) modal.style.display = 'none';
 
@@ -542,7 +559,7 @@ function searchSimilarCreator(username) {
 }
 
 function escapeHtml(str) {
-    if (!str) return '';
+    if (str === null || str === undefined) return '';
     return String(str)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
