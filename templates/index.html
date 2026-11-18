@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=20261117_3">
 </head>
 <body>
     <header class="navbar">
@@ -92,7 +92,7 @@
                         <button type="button" class="mode-btn" data-mode="similar">Lookalike Similar (e.g. @cristiano)</button>
                     </div>
 
-                    <form id="searchForm" class="search-box-row">
+                    <form id="searchForm" class="search-box-row" onsubmit="event.preventDefault(); return false;">
                         <div class="search-input-wrap">
                             <span class="search-icon-inside">
                                 <i data-lucide="search" style="width: 16px; height: 16px;"></i>
@@ -101,11 +101,11 @@
                                 type="text" 
                                 id="searchInput" 
                                 class="search-input" 
-                                placeholder="Search topics, niches, or keywords (e.g. 'fitness and healthy nutrition')..."
+                                placeholder="Search topics, niches, or influencers (e.g. 'cristiano', 'fitness', 'tech')..."
                                 autocomplete="off"
                             >
                         </div>
-                        <button type="submit" class="btn btn-primary" id="searchSubmitBtn">
+                        <button type="button" class="btn btn-primary" id="searchSubmitBtn">
                             <span>Search</span>
                             <i data-lucide="arrow-right" style="width: 15px; height: 15px;"></i>
                         </button>
@@ -197,7 +197,7 @@
                     <button type="button" class="suggestion-pill">Who are similar creators to @taylorswift?</button>
                 </div>
 
-                <form id="chatForm" class="chat-input-area">
+                <form id="chatForm" class="chat-input-area" onsubmit="event.preventDefault(); return false;">
                     <input 
                         type="text" 
                         id="chatInput" 
@@ -205,7 +205,7 @@
                         placeholder="Ask AI for creator recommendations or strategy..." 
                         autocomplete="off"
                     >
-                    <button type="submit" class="btn btn-primary" id="chatSendBtn">
+                    <button type="button" class="btn btn-primary" id="chatSendBtn">
                         <i data-lucide="send" style="width: 15px; height: 15px;"></i>
                     </button>
                 </form>
@@ -226,6 +226,6 @@
         </div>
     </div>
 
-    <script src="/static/js/app.js"></script>
+    <script src="/static/js/app.js?v=20261117_3"></script>
 </body>
 </html>
