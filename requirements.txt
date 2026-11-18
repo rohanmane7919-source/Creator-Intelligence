@@ -10,3 +10,5 @@ groq>=0.30.0
 requests>=2.31.0
 httpx>=0.25.0
 apify-client>=1.6.0
+supabase>=2.0.0
+psycopg2-binary>=2.9.0
