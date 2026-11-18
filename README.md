@@ -23,6 +23,7 @@ Creator Intelligence provides brand marketers and agencies with semantic creator
 - `recommendation.py`: Recommendation engine computing query relevance, lookalike similarity, and user-adaptive 5-card recommendations.
 - `creator_recommender.py`: Core vector catalog and TF-IDF similarity model.
 - `add_new_creator.py`: Live ingestion pipeline to scrape or manually register and index new influencers into the vector store.
+- `requirements.txt`: Python package dependencies.
 - `templates/`:
   - `login.html`: Multi-role login and registration portal with 1-click demo logins.
   - `index.html`: Unified Brand/User dashboard containing search discovery, filters, personalized recommendations, and the AI chatbot.
@@ -34,13 +35,18 @@ Creator Intelligence provides brand marketers and agencies with semantic creator
 
 ## Quick Start
 
-### 1. Run the Web Application
+### 1. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Run the Web Application
 ```bash
 python main.py
 ```
 Access the application at [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
-### 2. Default Demo Accounts
+### 3. Default Demo Accounts
 
 | Role | Username | Password | Default Portal |
 |---|---|---|---|
@@ -50,7 +56,7 @@ Access the application at [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 You can also use the 1-click demo login buttons directly on the login page or register a new user account.
 
-### 3. Recommendation Workflow
+### 4. Recommendation Workflow
 
 1. **Initial Login**: Users without search history receive 5 curated, top-performing creators across diverse catalog categories.
 2. **Search Execution**: Queries are stored in the database, matching creators are presented in the discovery list, and the 5 recommendations adapt immediately.
