@@ -27,6 +27,14 @@ app = FastAPI(
     version="3.0.0"
 )
 
+@app.middleware("http")
+async def add_no_cache_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
@@ -121,7 +129,8 @@ async def api_login(req: LoginRequest, response: Response):
         value=str(user["id"]),
         max_age=86400 * 7,
         httponly=True,
-        samesite="lax"
+        samesite="lax",
+        path="/"
     )
     redirect_map = {"admin": "/admin", "creator": "/creator", "user": "/"}
     target_url = redirect_map.get(user["role"], "/")
@@ -145,7 +154,8 @@ async def api_signup(req: SignupRequest, response: Response):
         value=str(user["id"]),
         max_age=86400 * 7,
         httponly=True,
-        samesite="lax"
+        samesite="lax",
+        path="/"
     )
     redirect_map = {"admin": "/admin", "creator": "/creator", "user": "/"}
     target_url = redirect_map.get(user["role"], "/")
@@ -154,12 +164,12 @@ async def api_signup(req: SignupRequest, response: Response):
 @app.get("/logout")
 async def logout(response: Response):
     resp = RedirectResponse(url="/login", status_code=302)
-    resp.delete_cookie(key="session_user_id")
+    resp.delete_cookie(key="session_user_id", path="/")
     return resp
 
 @app.post("/api/logout")
 async def api_logout(response: Response):
-    response.delete_cookie(key="session_user_id")
+    response.delete_cookie(key="session_user_id", path="/")
     return {"status": "success"}
 
 @app.get("/", response_class=HTMLResponse)
