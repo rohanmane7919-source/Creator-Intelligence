@@ -3,77 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Creator Intelligence Platform</title>
+    <title>Sign In &bull; Creator Intelligence Platform</title>
+    <meta name="description" content="Sign in to your Creator Intelligence account or explore with our 1-click demo profiles.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=20261120_1">
 </head>
-<body>
+<body class="auth-page-body">
+
+    <div class="auth-nav-bar">
+        <a href="/" class="auth-back-link">
+            <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>
+            <span>Back to Home</span>
+        </a>
+    </div>
+
     <div class="auth-wrapper">
         <div class="auth-card">
             <div class="auth-brand">
-                <div class="auth-icon">
-                    <i data-lucide="sparkles"></i>
-                </div>
+                <a href="/" style="display: inline-block; text-decoration: none;">
+                    <div class="auth-icon">
+                        <i data-lucide="sparkles"></i>
+                    </div>
+                </a>
                 <h1 class="auth-title">Creator Intelligence</h1>
-                <p class="auth-desc">Influencer Discovery & AI Recommendation Engine</p>
+                <p class="auth-desc">Influencer Discovery & AI Recommendation Platform</p>
             </div>
 
             <div class="role-tabs">
-                <button type="button" class="role-tab-btn active" data-role="user" id="tabUser">Brand / User</button>
-                <button type="button" class="role-tab-btn" data-role="creator" id="tabCreator">Creator</button>
-                <button type="button" class="role-tab-btn" data-role="admin" id="tabAdmin">Admin</button>
+                <button type="button" class="role-tab-btn active" data-role="user" id="tabUser">
+                    <i data-lucide="briefcase" style="width: 14px; height: 14px;"></i>
+                    <span>Brand / Marketer</span>
+                </button>
+                <button type="button" class="role-tab-btn" data-role="creator" id="tabCreator">
+                    <i data-lucide="video" style="width: 14px; height: 14px;"></i>
+                    <span>Creator</span>
+                </button>
+                <button type="button" class="role-tab-btn" data-role="admin" id="tabAdmin">
+                    <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
+                    <span>Admin</span>
+                </button>
             </div>
 
-            <div id="authAlert" style="display: none; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.8rem; margin-bottom: 1rem;"></div>
+            <div id="authAlert" style="display: none; padding: 0.75rem 1rem; border-radius: var(--radius-md); font-size: 0.82rem; margin-bottom: 1.25rem;"></div>
 
+            <!-- Sign In Form -->
             <form id="loginForm" class="auth-form">
                 <div class="form-group">
                     <label class="form-label" for="loginUsername">Username</label>
-                    <input type="text" id="loginUsername" class="form-input" placeholder="Enter your username" required autocomplete="username">
+                    <div class="input-with-icon">
+                        <i data-lucide="user" class="input-icon"></i>
+                        <input type="text" id="loginUsername" class="form-input has-icon" placeholder="Enter your username (e.g. user)" required autocomplete="username">
+                    </div>
                 </div>
+
                 <div class="form-group">
                     <label class="form-label" for="loginPassword">Password</label>
-                    <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password" required autocomplete="current-password">
+                    <div class="input-with-icon">
+                        <i data-lucide="lock" class="input-icon"></i>
+                        <input type="password" id="loginPassword" class="form-input has-icon has-toggle" placeholder="Enter your password" required autocomplete="current-password">
+                        <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('loginPassword', this)">
+                            <i data-lucide="eye" style="width: 15px; height: 15px;"></i>
+                        </button>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" id="loginSubmitBtn">
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem; padding: 0.75rem 1rem;" id="loginSubmitBtn">
                     <span>Sign In to Dashboard</span>
                     <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
                 </button>
             </form>
 
+            <!-- Sign Up Form -->
             <form id="signupForm" class="auth-form" style="display: none;">
                 <div class="form-group">
                     <label class="form-label" for="signupUsername">Username</label>
-                    <input type="text" id="signupUsername" class="form-input" placeholder="Choose a username" required>
+                    <div class="input-with-icon">
+                        <i data-lucide="user" class="input-icon"></i>
+                        <input type="text" id="signupUsername" class="form-input has-icon" placeholder="Choose a username" required>
+                    </div>
                 </div>
+
                 <div class="form-group">
                     <label class="form-label" for="signupEmail">Email Address</label>
-                    <input type="email" id="signupEmail" class="form-input" placeholder="name@company.com">
+                    <div class="input-with-icon">
+                        <i data-lucide="mail" class="input-icon"></i>
+                        <input type="email" id="signupEmail" class="form-input has-icon" placeholder="name@company.com">
+                    </div>
                 </div>
+
                 <div class="form-group">
                     <label class="form-label" for="signupPassword">Password</label>
-                    <input type="password" id="signupPassword" class="form-input" placeholder="Create a secure password" required>
+                    <div class="input-with-icon">
+                        <i data-lucide="lock" class="input-icon"></i>
+                        <input type="password" id="signupPassword" class="form-input has-icon has-toggle" placeholder="Create a secure password" required>
+                        <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('signupPassword', this)">
+                            <i data-lucide="eye" style="width: 15px; height: 15px;"></i>
+                        </button>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" id="signupSubmitBtn">
-                    <span>Create Account</span>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem; padding: 0.75rem 1rem;" id="signupSubmitBtn">
+                    <span>Create Free Account</span>
                     <i data-lucide="user-plus" style="width: 16px; height: 16px;"></i>
                 </button>
             </form>
 
+            <!-- 1-Click Demo Sandbox Login -->
             <div class="demo-box">
-                <div class="demo-title">Quick 1-Click Demo Login</div>
+                <div class="demo-title">
+                    <i data-lucide="zap" style="width: 13px; height: 13px; color: #d97706;"></i>
+                    <span>Quick 1-Click Demo Access</span>
+                </div>
                 <div class="demo-buttons-row">
-                    <button type="button" class="demo-btn" onclick="quickLogin('user', 'user123', 'user')">Demo User</button>
-                    <button type="button" class="demo-btn" onclick="quickLogin('creator', 'creator123', 'creator')">Demo Creator</button>
-                    <button type="button" class="demo-btn" onclick="quickLogin('admin', 'admin123', 'admin')">Demo Admin</button>
+                    <button type="button" class="demo-btn" onclick="quickLogin('user', 'user123', 'user')">
+                        <strong>Demo Brand</strong>
+                        <span>(user / user123)</span>
+                    </button>
+                    <button type="button" class="demo-btn" onclick="quickLogin('creator', 'creator123', 'creator')">
+                        <strong>Demo Creator</strong>
+                        <span>(creator / creator123)</span>
+                    </button>
+                    <button type="button" class="demo-btn" onclick="quickLogin('admin', 'admin123', 'admin')">
+                        <strong>Demo Admin</strong>
+                        <span>(admin / admin123)</span>
+                    </button>
                 </div>
             </div>
 
             <div class="auth-switch">
-                <span id="switchText">New to the platform?</span>
+                <span id="switchText">New to Creator Intelligence?</span>
                 <a id="toggleAuthMode">Create an account</a>
             </div>
         </div>
@@ -86,6 +147,11 @@
         document.addEventListener('DOMContentLoaded', () => {
             if (window.lucide) lucide.createIcons();
 
+            // Handle URL Search Params (?role=admin, ?tab=signup)
+            const urlParams = new URLSearchParams(window.location.search);
+            const roleParam = urlParams.get('role');
+            const tabParam = urlParams.get('tab');
+
             const roleButtons = document.querySelectorAll('.role-tab-btn');
             roleButtons.forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -95,13 +161,20 @@
                 });
             });
 
+            if (roleParam) {
+                const targetBtn = Array.from(roleButtons).find(b => b.getAttribute('data-role') === roleParam.toLowerCase());
+                if (targetBtn) {
+                    targetBtn.click();
+                }
+            }
+
             const toggleAuthLink = document.getElementById('toggleAuthMode');
             const loginForm = document.getElementById('loginForm');
             const signupForm = document.getElementById('signupForm');
             const switchText = document.getElementById('switchText');
 
-            toggleAuthLink.addEventListener('click', () => {
-                isSignup = !isSignup;
+            function setSignupMode(signup) {
+                isSignup = signup;
                 if (isSignup) {
                     loginForm.style.display = 'none';
                     signupForm.style.display = 'flex';
@@ -110,11 +183,20 @@
                 } else {
                     signupForm.style.display = 'none';
                     loginForm.style.display = 'flex';
-                    switchText.innerText = 'New to the platform?';
+                    switchText.innerText = 'New to Creator Intelligence?';
                     toggleAuthLink.innerText = 'Create an account';
                 }
+            }
+
+            toggleAuthLink.addEventListener('click', () => {
+                setSignupMode(!isSignup);
             });
 
+            if (tabParam === 'signup') {
+                setSignupMode(true);
+            }
+
+            // Form Submit Handlers
             loginForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const uname = document.getElementById('loginUsername').value.trim();
@@ -129,6 +211,10 @@
                 const pwd = document.getElementById('signupPassword').value;
 
                 try {
+                    const submitBtn = document.getElementById('signupSubmitBtn');
+                    submitBtn.disabled = true;
+                    submitBtn.innerText = 'Creating account...';
+
                     const res = await fetch('/api/signup', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -142,11 +228,18 @@
                     const data = await res.json();
                     if (!res.ok) {
                         showAlert(data.detail || 'Signup failed', true);
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = `<span>Create Free Account</span><i data-lucide="user-plus" style="width: 16px; height: 16px;"></i>`;
+                        if (window.lucide) lucide.createIcons();
                         return;
                     }
-                    window.location.href = data.redirect_url || '/';
+                    window.location.href = data.redirect_url || '/dashboard';
                 } catch (err) {
-                    showAlert('Network error during registration.', true);
+                    showAlert('Network error during registration. Please try again.', true);
+                    const submitBtn = document.getElementById('signupSubmitBtn');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = `<span>Create Free Account</span><i data-lucide="user-plus" style="width: 16px; height: 16px;"></i>`;
+                    if (window.lucide) lucide.createIcons();
                 }
             });
         });
@@ -164,7 +257,13 @@
         }
 
         async function performLogin(username, password, role) {
+            const submitBtn = document.getElementById('loginSubmitBtn');
             try {
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerText = 'Authenticating...';
+                }
+
                 const res = await fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -176,12 +275,22 @@
                 });
                 const data = await res.json();
                 if (!res.ok) {
-                    showAlert(data.detail || 'Authentication failed. Check credentials.', true);
+                    showAlert(data.detail || 'Authentication failed. Please verify credentials.', true);
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = `<span>Sign In to Dashboard</span><i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>`;
+                        if (window.lucide) lucide.createIcons();
+                    }
                     return;
                 }
-                window.location.href = data.redirect_url || '/';
+                window.location.href = data.redirect_url || '/dashboard';
             } catch (err) {
-                showAlert('Network error during login.', true);
+                showAlert('Network error during login. Please check connection.', true);
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = `<span>Sign In to Dashboard</span><i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>`;
+                    if (window.lucide) lucide.createIcons();
+                }
             }
         }
 
@@ -199,6 +308,19 @@
                 el.style.color = 'var(--success)';
                 el.style.border = '1px solid var(--success-border)';
             }
+        }
+
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.innerHTML = `<i data-lucide="eye-off" style="width: 15px; height: 15px;"></i>`;
+            } else {
+                input.type = 'password';
+                btn.innerHTML = `<i data-lucide="eye" style="width: 15px; height: 15px;"></i>`;
+            }
+            if (window.lucide) lucide.createIcons();
         }
     </script>
 </body>
