@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creator Intelligence | Next-Gen Influencer Discovery & AI Recommendations</title>
+    <meta name="description" content="Precision creator discovery powered by dense vector embeddings, real-time engagement benchmarking, and AI campaign intelligence.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/static/css/style.css?v=20261120_1">
+</head>
+<body class="home-page-body">
+
+    <!-- Top Sticky Navigation -->
+    <header class="home-navbar">
+        <div class="home-nav-container">
+            <a href="/" class="brand">
+                <div class="brand-icon">
+                    <i data-lucide="sparkles"></i>
+                </div>
+                <div>
+                    <div class="brand-title">Creator Intelligence</div>
+                    <div class="brand-subtitle">Discovery & AI Platform</div>
+                </div>
+            </a>
+
+            <nav class="home-nav-links">
+                <a href="#live-demo" class="nav-link">Live Catalog</a>
+                <a href="#features" class="nav-link">Capabilities</a>
+                <a href="#roi-calculator" class="nav-link">ROI Simulator</a>
+                <a href="#comparison" class="nav-link">Why Us</a>
+                <a href="#solutions" class="nav-link">Solutions</a>
+                <a href="#faq" class="nav-link">FAQ</a>
+            </nav>
+
+            <div class="home-nav-actions">
+                {% if user %}
+                    <div class="user-profile-badge">
+                        <div class="user-avatar-small">{{ user.username[0].upper() }}</div>
+                        <span class="user-name-text">{{ user.username }}</span>
+                        <span class="role-tag">{{ user.role }}</span>
+                    </div>
+
+                    {% if user.role == 'admin' %}
+                        <a href="/admin" class="btn btn-primary btn-sm">
+                            <i data-lucide="shield" style="width: 14px; height: 14px;"></i>
+                            <span>Admin Console</span>
+                        </a>
+                    {% elif user.role == 'creator' %}
+                        <a href="/creator" class="btn btn-primary btn-sm">
+                            <i data-lucide="user-check" style="width: 14px; height: 14px;"></i>
+                            <span>Creator View</span>
+                        </a>
+                    {% else %}
+                        <a href="/dashboard" class="btn btn-primary btn-sm">
+                            <i data-lucide="layout-dashboard" style="width: 14px; height: 14px;"></i>
+                            <span>Open Dashboard</span>
+                        </a>
+                    {% endif %}
+
+                    <a href="/logout" class="btn btn-secondary btn-sm" title="Sign Out">
+                        <i data-lucide="log-out" style="width: 14px; height: 14px;"></i>
+                    </a>
+                {% else %}
+                    <a href="/login" class="btn btn-primary btn-sm">
+                        <i data-lucide="log-in" style="width: 14px; height: 14px;"></i>
+                        <span>Sign In</span>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-glow-backdrop"></div>
+        <div class="hero-container">
+            <div class="hero-badge">
+                <span class="hero-badge-dot"></span>
+                <span class="hero-badge-text">Vector-Powered Influencer Intelligence Engine</span>
+            </div>
+
+            <h1 class="hero-title">
+                Precision Creator Discovery <br class="desktop-only">
+                <span class="gradient-text">Powered by AI & Vector Math</span>
+            </h1>
+
+            <p class="hero-description">
+                Eliminate superficial follower counts and manual spreadsheet guessing. Creator Intelligence leverages dense multi-dimensional vector embeddings, authentic engagement curves, and automated lookalike matching to identify the ideal creators for your campaigns in milliseconds.
+            </p>
+
+            <div class="hero-cta-group">
+                <a href="/login" class="btn btn-hero-primary">
+                    <i data-lucide="sparkles" style="width: 18px; height: 18px;"></i>
+                    <span>Launch Discovery Platform</span>
+                    <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
+                </a>
+
+                <a href="#live-demo" class="btn btn-hero-secondary">
+                    <i data-lucide="search" style="width: 17px; height: 17px;"></i>
+                    <span>Try Interactive Demo Below</span>
+                </a>
+            </div>
+
+            <!-- Instant Demo Quick Links -->
+            <div class="hero-demo-shortcuts">
+                <span class="demo-shortcuts-label">1-Click Role Sandbox:</span>
+                <div class="demo-shortcuts-list">
+                    <a href="/login?role=user" class="demo-chip">
+                        <i data-lucide="briefcase" style="width: 13px; height: 13px;"></i>
+                        <span>Brand / Marketer Demo</span>
+                    </a>
+                    <a href="/login?role=creator" class="demo-chip">
+                        <i data-lucide="video" style="width: 13px; height: 13px;"></i>
+                        <span>Creator Demo</span>
+                    </a>
+                    <a href="/login?role=admin" class="demo-chip">
+                        <i data-lucide="shield-check" style="width: 13px; height: 13px;"></i>
+                        <span>Admin Console</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Key Platform Metrics Strip -->
+            <div class="hero-metrics-bar">
+                <div class="hero-metric-card">
+                    <div class="hero-metric-number">{{ catalog_count }}+</div>
+                    <div class="hero-metric-label">Verified Creators Indexed</div>
+                </div>
+                <div class="hero-metric-divider"></div>
+                <div class="hero-metric-card">
+                    <div class="hero-metric-number">98.4%</div>
+                    <div class="hero-metric-label">Semantic Match Precision</div>
+                </div>
+                <div class="hero-metric-divider"></div>
+                <div class="hero-metric-card">
+                    <div class="hero-metric-number">3.8x</div>
+                    <div class="hero-metric-label">Average Campaign ROI</div>
+                </div>
+                <div class="hero-metric-divider"></div>
+                <div class="hero-metric-card">
+                    <div class="hero-metric-number">&lt; 80ms</div>
+                    <div class="hero-metric-label">Vector Search Latency</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Live Search Showcase (Killer Feature) -->
+    <section class="home-section" id="live-demo">
+        <div class="section-container">
+            <div class="section-title-center">
+                <span class="section-eyebrow">Interactive Live Sandbox</span>
+                <h2 class="section-main-heading">Test Vector Discovery in Real Time</h2>
+                <p class="section-main-subtext">Experience our vector search and lookalike engine right now. Search any niche, campaign topic, or creator handle to test relevance matching.</p>
+            </div>
+
+            <div class="interactive-search-card">
+                <div class="search-mode-bar">
+                    <div class="mode-pills">
+                        <button type="button" class="home-mode-btn active" data-mode="auto">
+                            <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i>
+                            <span>Topic & Campaign Semantic Search</span>
+                        </button>
+                        <button type="button" class="home-mode-btn" data-mode="similar">
+                            <i data-lucide="users" style="width: 14px; height: 14px;"></i>
+                            <span>Lookalike Creator Matching (e.g. @cristiano)</span>
+                        </button>
+                    </div>
+                    <span class="search-live-status">
+                        <span class="status-pulse"></span>
+                        <span id="homeResultCount">{{ featured_creators|length }} Creators Ready</span>
+                    </span>
+                </div>
+
+                <div class="home-search-controls-row">
+                    <div class="home-search-input-wrap">
+                        <i data-lucide="search" class="home-search-icon"></i>
+                        <input 
+                            type="text" 
+                            id="homeSearchInput" 
+                            class="home-search-input" 
+                            placeholder="Search topics, categories, or keywords (e.g. 'sports', 'fitness', 'tech')..."
+                            autocomplete="off"
+                        >
+                    </div>
+
+                    <div class="home-category-select-wrap">
+                        <select id="homeCategorySelect" class="home-category-select">
+                            <option value="">All Categories</option>
+                            {% for cat in categories %}
+                                <option value="{{ cat }}">{{ cat }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button type="button" class="btn btn-primary btn-search-execute" id="homeSearchBtn">
+                        <i data-lucide="zap" style="width: 16px; height: 16px;"></i>
+                        <span>Search Catalog</span>
+                    </button>
+                </div>
+
+                <!-- Suggestion Chips -->
+                <div class="home-suggestions-bar">
+                    <span class="suggestions-label">Try Examples:</span>
+                    <div class="suggestions-chips-wrap">
+                        <button type="button" class="suggestion-chip" data-query="Sports & Football" data-mode="auto">⚽ Sports & Football</button>
+                        <button type="button" class="suggestion-chip" data-query="Fashion & Beauty" data-mode="auto">💄 Fashion & Beauty</button>
+                        <button type="button" class="suggestion-chip" data-query="cristiano" data-mode="similar">🎯 Cristiano Ronaldo Lookalikes</button>
+                        <button type="button" class="suggestion-chip" data-query="Technology" data-mode="auto">💻 Tech Reviewers</button>
+                        <button type="button" class="suggestion-chip" data-query="Acting & Fitness" data-mode="auto">🏋️ Fitness & Wellness</button>
+                        <button type="button" class="suggestion-chip" data-query="kyliejenner" data-mode="similar">🌟 Kylie Jenner Lookalikes</button>
+                    </div>
+                </div>
+
+                <!-- Creators Grid Container -->
+                <div class="home-creators-grid" id="homeCreatorsGrid">
+                    {% for creator in featured_creators %}
+                        <div class="creator-showcase-card" onclick="openHomeCreatorModal('{{ creator.username }}')">
+                            <div class="card-top-row">
+                                <div class="creator-avatar-wrap">
+                                    <div class="creator-avatar-badge">{{ creator.username[0].upper() }}</div>
+                                </div>
+                                <span class="card-tier-pill">{{ creator.follower_tier }}</span>
+                            </div>
+
+                            <div class="creator-info-block">
+                                <div class="creator-name-line">
+                                    <h4 class="creator-display-name">{{ creator.full_name }}</h4>
+                                    {% if creator.is_verified %}
+                                        <span class="verified-badge" title="Verified Creator"><i data-lucide="badge-check"></i></span>
+                                    {% endif %}
+                                </div>
+                                <div class="creator-handle-text">@{{ creator.username }}</div>
+                                <span class="creator-category-chip">{{ creator.category }}</span>
+                            </div>
+
+                            <p class="creator-bio-snippet">{{ creator.bio or 'Content creator with high engagement and active community rapport.' }}</p>
+
+                            <div class="creator-metrics-row">
+                                <div class="metric-item">
+                                    <span class="metric-val">{{ creator.followers_formatted }}</span>
+                                    <span class="metric-lbl">Followers</span>
+                                </div>
+                                <div class="metric-item">
+                                    <span class="metric-val metric-eng">{{ creator.engagement_formatted }}</span>
+                                    <span class="metric-lbl">Engagement</span>
+                                </div>
+                            </div>
+
+                            <div class="card-footer-action">
+                                <button type="button" class="btn-card-preview">
+                                    <span>View Deep Intel</span>
+                                    <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+                                </button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="interactive-bottom-banner">
+                    <div class="bottom-banner-content">
+                        <i data-lucide="lock" style="width: 18px; height: 18px; color: var(--primary);"></i>
+                        <span>Unlock comprehensive audience demographics, historical ROI modeling, and 24/7 AI chat briefs.</span>
+                    </div>
+                    <a href="/login" class="btn btn-primary btn-sm">
+                        <span>Sign In for Full Intelligence</span>
+                        <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Campaign ROI Simulator -->
+    <section class="home-section bg-subtle-section" id="roi-calculator">
+        <div class="section-container">
+            <div class="section-title-center">
+                <span class="section-eyebrow">Data-Backed Modeling</span>
+                <h2 class="section-main-heading">Campaign Reach & ROI Simulator</h2>
+                <p class="section-main-subtext">Estimate creator roster sizing, unique reach, and engagement outcomes based on your target marketing budget.</p>
+            </div>
+
+            <div class="roi-calculator-box">
+                <div class="roi-controls-column">
+                    <div class="roi-control-group">
+                        <div class="roi-control-header">
+                            <label class="roi-control-label" for="roiBudgetSlider">Monthly Campaign Budget</label>
+                            <span class="roi-budget-badge" id="roiBudgetValue">$15,000</span>
+                        </div>
+                        <input 
+                            type="range" 
+                            id="roiBudgetSlider" 
+                            class="roi-slider" 
+                            min="1000" 
+                            max="75000" 
+                            step="1000" 
+                            value="15000"
+                        >
+                        <div class="slider-ticks">
+                            <span>$1,000</span>
+                            <span>$25,000</span>
+                            <span>$50,000</span>
+                            <span>$75,000</span>
+                        </div>
+                    </div>
+
+                    <div class="roi-control-group" style="margin-top: 1.5rem;">
+                        <label class="roi-control-label" for="roiTierSelect">Target Creator Audience Tier</label>
+                        <select id="roiTierSelect" class="select-input roi-tier-dropdown">
+                            <option value="mixed" selected>Optimal Mixed Roster (Micro + Mid-Tier High ROI)</option>
+                            <option value="nano">Nano Creators (&lt;10K &bull; High Intimacy 4.8% Eng)</option>
+                            <option value="micro">Micro Creators (10K-100K &bull; Strong Conversions 3.4% Eng)</option>
+                            <option value="mid">Mid-Tier Creators (100K-500K &bull; Broad Scale 2.6% Eng)</option>
+                            <option value="macro">Macro Influencers (500K-1M &bull; Brand Authority 1.9% Eng)</option>
+                            <option value="mega">Mega Celebrities (1M+ &bull; Mass Cultural Reach 1.4% Eng)</option>
+                        </select>
+                    </div>
+
+                    <div class="roi-pro-tip">
+                        <i data-lucide="lightbulb" style="width: 18px; height: 18px; color: #d97706; flex-shrink: 0;"></i>
+                        <p><strong>Intelligence Insight:</strong> Mid-tier and micro-creator combinations achieve 2.4x higher conversion efficiency than standalone mega-celebrity endorsements.</p>
+                    </div>
+                </div>
+
+                <div class="roi-results-column">
+                    <div class="roi-metric-tile">
+                        <div class="tile-icon"><i data-lucide="users-2"></i></div>
+                        <div>
+                            <div class="tile-number" id="calcCreators">8</div>
+                            <div class="tile-label">Recommended Creator Roster Size</div>
+                        </div>
+                    </div>
+
+                    <div class="roi-metric-tile">
+                        <div class="tile-icon"><i data-lucide="eye"></i></div>
+                        <div>
+                            <div class="tile-number" id="calcReach">1.0M</div>
+                            <div class="tile-label">Estimated Unique Campaign Reach</div>
+                        </div>
+                    </div>
+
+                    <div class="roi-metric-tile">
+                        <div class="tile-icon" style="background-color: var(--success-bg); color: var(--success);"><i data-lucide="heart"></i></div>
+                        <div>
+                            <div class="tile-number" style="color: var(--success);" id="calcEngagements">31.0K</div>
+                            <div class="tile-label">Projected Genuine Engagements</div>
+                        </div>
+                    </div>
+
+                    <div class="roi-metric-tile">
+                        <div class="tile-icon" style="background-color: #eff6ff; color: var(--primary);"><i data-lucide="trending-up"></i></div>
+                        <div>
+                            <div class="tile-number" style="color: var(--primary);" id="calcValue">$38.5K</div>
+                            <div class="tile-label">Estimated Earned Media Value (EMV)</div>
+                        </div>
+                    </div>
+
+                    <div class="roi-action-box">
+                        <a href="/login" class="btn btn-primary" style="width: 100%;">
+                            <span>Build This Creator Roster</span>
+                            <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Core Platform Capabilities (4 Pillars) -->
+    <section class="home-section" id="features">
+        <div class="section-container">
+            <div class="section-title-center">
+                <span class="section-eyebrow">Core Capabilities</span>
+                <h2 class="section-main-heading">Built on Genuine Creator Intelligence</h2>
+                <p class="section-main-subtext">Four algorithmic pillars designed to eliminate guesswork from influencer marketing and creator partnerships.</p>
+            </div>
+
+            <div class="pillars-grid">
+                <div class="pillar-card">
+                    <div class="pillar-icon-box">
+                        <i data-lucide="cpu"></i>
+                    </div>
+                    <h3 class="pillar-title">Dense Vector Semantic Search</h3>
+                    <p class="pillar-desc">
+                        Our engine embeds creator biographies, past brand associations, and audience niche topics into high-dimensional vector space. Search by concepts like "eco-friendly plant parents" and get pinpoint relevance.
+                    </p>
+                    <ul class="pillar-feature-list">
+                        <li><i data-lucide="check" style="width: 14px; height: 14px;"></i> Multi-attribute TF-IDF & dense indexing</li>
+                        <li><i data-lucide="check" style="width: 14px; height: 14px;"></i> Real-time cosine similarity ranking</li>
+                        <li><i data-lucide="check" style="width: 14px; height: 14px;"></i> Zero keyword-synonym brittleness</li>
+                    </ul>
+                </div>
+
+                <div class="pillar-card">
+                    <div class="pillar-icon-box" style="background-color: #f5f3ff; color: #7c3aed;">
+                        <i data-lucide="copy"></i>
+                    </div>
+                    <h3 class="pillar-title">Mathematical Lookalike Modeling</h3>
+                    <p class="pillar-desc">
+                        Found a creator whose audience delivered great campaign results? Input their handle to instantly discover dozens of unexploited lookalikes with identical audience engagement affinities.
+                    </p>
+                    <ul class="pillar-feature-list">
+                        <li><i data-lucide="check" style="width: 14px; height: 14px;"></i> Audience overlap graph modeling</li>
+                        <li><i data-lucide="check" style="width: 14px; height: 14px;"></i> Cross-tier lookalike scaling</li>
+                        <li><i data-lucide="check" style="width: 14px; height: 14px;"></i> Niche peer cluster isolation</li>
+                    </ul>
+                </div>
+
+                <div class="pillar-card">
+                    <div class="pillar-icon-box" style="background-color: #ecfdf5; color: #059669;">
+                        <i data-lucide="shield-check"></i>
+                    </div>
+                    <h3 class="pillar-title">Authentic Engagement Auditing</h3>
+                    <p class="pillar-desc">
+                        Surface genuine audience connection. We compute normalized engagement rates against tier percentiles, catching follower purchase anomalies and surface true community trust.
+                    </p>
+                    <ul class="pillar-feature-list">
+                        <li><i data-lucide="check" style="width: 14px; height: 14px;"></i> Follower tier normalized benchmarks</li>
+                        <li><i data-lucide="check" style="width: 14px; height: 14px;"></i> Bot inflation detection filters</li>
+                        <li><i data-lucide="check" style="width: 14px; height: 14px;"></i> Authentic conversion probability</li>
+                    </ul>
+                </div>
+
+                <div class="pillar-card">
+                    <div class="pillar-icon-box" style="background-color: #fff7ed; color: #ea580c;">
+                        <i data-lucide="bot"></i>
+                    </div>
+                    <h3 class="pillar-title">AI Campaign Strategist & Copilot</h3>
+                    <p class="pillar-desc">
+                        Integrated conversational copilot powered by Groq LLMs. Formulate collaboration briefs, negotiate deliverables, and get strategic creator recommendations tailored to your product goals.
+                    </p>
+                    <ul class="pillar-feature-list">
+                        <li><i data-lucide="check" style="width: 14px; height: 14px;"></i> Automated outreach brief generation</li>
+                        <li><i data-lucide="check" style="width: 14px; height: 14px;"></i> Context-aware preference memory</li>
+                        <li><i data-lucide="check" style="width: 14px; height: 14px;"></i> Fast, sub-second Groq inference</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Table: Traditional vs Creator Intelligence -->
+    <section class="home-section bg-subtle-section" id="comparison">
+        <div class="section-container">
+            <div class="section-title-center">
+                <span class="section-eyebrow">The Competitive Edge</span>
+                <h2 class="section-main-heading">Traditional Discovery vs. Creator Intelligence</h2>
+                <p class="section-main-subtext">See why leading brands and talent managers upgrade from manual spreadsheet hunting to vector intelligence.</p>
+            </div>
+
+            <div class="comparison-table-wrap">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 32%;">Feature / Workflow</th>
+                            <th style="width: 34%;" class="table-col-old">Traditional Influencer Search</th>
+                            <th style="width: 34%;" class="table-col-new">Creator Intelligence Platform</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="feature-title">Search Methodology</td>
+                            <td class="col-old"><i data-lucide="x" class="icon-cross"></i> Exact string & hashtag matching</td>
+                            <td class="col-new"><i data-lucide="check" class="icon-check"></i> Dense multi-dimensional vector embeddings</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-title">Lookalike Scaling</td>
+                            <td class="col-old"><i data-lucide="x" class="icon-cross"></i> Manual guess-and-check on Instagram</td>
+                            <td class="col-new"><i data-lucide="check" class="icon-check"></i> 1-Click algorithmic mathematical similarity</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-title">Engagement Vetting</td>
+                            <td class="col-old"><i data-lucide="x" class="icon-cross"></i> Surface vanity follower numbers</td>
+                            <td class="col-new"><i data-lucide="check" class="icon-check"></i> Tier-adjusted authentic engagement curves</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-title">AI Strategy Copilot</td>
+                            <td class="col-old"><i data-lucide="x" class="icon-cross"></i> None &bull; manual outreach planning</td>
+                            <td class="col-new"><i data-lucide="check" class="icon-check"></i> 24/7 Context-aware Groq LLM campaign advisor</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-title">Dynamic Personalization</td>
+                            <td class="col-old"><i data-lucide="x" class="icon-cross"></i> Static catalogs without learning</td>
+                            <td class="col-new"><i data-lucide="check" class="icon-check"></i> Automatically updates recommendations from chats</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-title">Onboarding & Time to Value</td>
+                            <td class="col-old"><i data-lucide="x" class="icon-cross"></i> Weeks of agency calls & retainer fees</td>
+                            <td class="col-new"><i data-lucide="check" class="icon-check"></i> Instant access, sub-80ms queries, immediate results</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tailored Solutions for All Roles -->
+    <section class="home-section" id="solutions">
+        <div class="section-container">
+            <div class="section-title-center">
+                <span class="section-eyebrow">Role Solutions</span>
+                <h2 class="section-main-heading">Designed for Brands, Creators & Teams</h2>
+                <p class="section-main-subtext">Tailored dashboards and tools configured for every stakeholder in the modern creator economy.</p>
+            </div>
+
+            <div class="solutions-grid">
+                <div class="solution-card">
+                    <div class="solution-header">
+                        <div class="solution-icon-wrap"><i data-lucide="shopping-bag"></i></div>
+                        <span class="solution-role-tag">For Brands & Marketers</span>
+                    </div>
+                    <h3 class="solution-title">Maximize Campaign Conversion & Brand Alignment</h3>
+                    <p class="solution-desc">
+                        Build data-backed creator rosters that deliver measurable conversions. Validate engagement integrity, forecast reach, and communicate directly with our AI campaign strategist.
+                    </p>
+                    <div class="solution-benefits">
+                        <div class="benefit-item"><i data-lucide="check-circle-2"></i> Uncover hidden high-engagement micro niches</div>
+                        <div class="benefit-item"><i data-lucide="check-circle-2"></i> Eliminate influencer fraud & inflated counts</div>
+                        <div class="benefit-item"><i data-lucide="check-circle-2"></i> Instant lookalike suggestions from top performers</div>
+                    </div>
+                    <a href="/login?role=user" class="btn btn-secondary solution-cta">
+                        <span>Sign In as Brand</span>
+                        <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+                    </a>
+                </div>
+
+                <div class="solution-card featured-solution">
+                    <div class="solution-badge-pill">Most Popular</div>
+                    <div class="solution-header">
+                        <div class="solution-icon-wrap" style="background-color: var(--primary); color: #ffffff;"><i data-lucide="sparkles"></i></div>
+                        <span class="solution-role-tag">For Content Creators</span>
+                    </div>
+                    <h3 class="solution-title">Benchmark Metrics & Get Discovered by Top Brands</h3>
+                    <p class="solution-desc">
+                        Claim and manage your creator profile. Benchmark your engagement against category peers, identify lookalike collaborators, and highlight verified stats to brand decision-makers.
+                    </p>
+                    <div class="solution-benefits">
+                        <div class="benefit-item"><i data-lucide="check-circle-2"></i> Benchmark performance against niche lookalikes</div>
+                        <div class="benefit-item"><i data-lucide="check-circle-2"></i> Update bio, niche topics & engagement metrics</div>
+                        <div class="benefit-item"><i data-lucide="check-circle-2"></i> Gain organic placement in brand discovery search</div>
+                    </div>
+                    <a href="/login?role=creator" class="btn btn-primary solution-cta">
+                        <span>Sign In as Creator</span>
+                        <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+                    </a>
+                </div>
+
+                <div class="solution-card">
+                    <div class="solution-header">
+                        <div class="solution-icon-wrap"><i data-lucide="sliders"></i></div>
+                        <span class="solution-role-tag">For Admins & Agencies</span>
+                    </div>
+                    <h3 class="solution-title">Scale Indexing & Vector Platform Telemetry</h3>
+                    <p class="solution-desc">
+                        Administer the creator catalog, index new creator handles with zero downtime, monitor live vector search queries, and oversee platform user accounts with enterprise telemetry.
+                    </p>
+                    <div class="solution-benefits">
+                        <div class="benefit-item"><i data-lucide="check-circle-2"></i> Index new creators with instant FAISS embedding</div>
+                        <div class="benefit-item"><i data-lucide="check-circle-2"></i> Real-time search & chat telemetry monitoring</div>
+                        <div class="benefit-item"><i data-lucide="check-circle-2"></i> Full user account management & database sync</div>
+                    </div>
+                    <a href="/login?role=admin" class="btn btn-secondary solution-cta">
+                        <span>Sign In as Admin</span>
+                        <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive FAQ Section -->
+    <section class="home-section bg-subtle-section" id="faq">
+        <div class="section-container">
+            <div class="section-title-center">
+                <span class="section-eyebrow">Frequently Answered</span>
+                <h2 class="section-main-heading">Everything You Need to Know</h2>
+                <p class="section-main-subtext">Clear answers regarding creator indexing, vector math, and how Creator Intelligence works.</p>
+            </div>
+
+            <div class="faq-list">
+                <div class="faq-item active">
+                    <button type="button" class="faq-question">
+                        <span>How does vector similarity search work compared to standard keyword search?</span>
+                        <i data-lucide="chevron-down" class="faq-arrow"></i>
+                    </button>
+                    <div class="faq-answer">
+                        Standard search engines look for literal string matches in a creator's name or bio. If you search for "healthy eating", it might miss someone whose bio reads "plant-based whole food nutritionist". Creator Intelligence converts bios, niches, and audience context into high-dimensional numerical vectors using TF-IDF and dense embeddings. It measures the geometric angle (cosine distance) between your query and creators, discovering conceptually relevant talent regardless of wording.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button type="button" class="faq-question">
+                        <span>How is engagement rate measured and why does it matter?</span>
+                        <i data-lucide="chevron-down" class="faq-arrow"></i>
+                    </button>
+                    <div class="faq-answer">
+                        Engagement rate is calculated by dividing average interactions (likes, comments) by total followers across recent posts. Raw follower count is frequently inflated by inactive or bot accounts. Our system categorizes creators into tiers (Nano, Micro, Mid, Macro, Mega) and scores their engagement against benchmark percentiles, ensuring brands invest in creators with active community trust.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button type="button" class="faq-question">
+                        <span>Can I test the platform without an account?</span>
+                        <i data-lucide="chevron-down" class="faq-arrow"></i>
+                    </button>
+                    <div class="faq-answer">
+                        Yes! The interactive demo above lets you search the live catalog and preview creator profiles with zero signup. To unlock personalized recommendations, custom campaign brief generation, and chat history with the AI Copilot, you can create a free account or use our 1-click demo accounts on the sign-in page.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button type="button" class="faq-question">
+                        <span>How does the AI Assistant personalize recommendations?</span>
+                        <i data-lucide="chevron-down" class="faq-arrow"></i>
+                    </button>
+                    <div class="faq-answer">
+                        Every time you search for specific niches or converse with the AI Copilot in the dashboard, the system extracts key campaign themes and updates your user preference profile in real time. Your top 5 recommendations on the dashboard automatically refresh to mirror your latest campaign focus.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button type="button" class="faq-question">
+                        <span>Can new creators be indexed into the catalog?</span>
+                        <i data-lucide="chevron-down" class="faq-arrow"></i>
+                    </button>
+                    <div class="faq-answer">
+                        Yes. Admins can index new creators via handle (@) directly through the Admin Console. The system automatically scrapes or calculates engagement metrics, creates vector embeddings, updates the FAISS index, and synchronizes the record to the database instantly.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- High-Impact Call to Action Banner -->
+    <section class="home-section">
+        <div class="section-container">
+            <div class="home-cta-card">
+                <div class="cta-glow-circle"></div>
+                <div class="cta-card-content">
+                    <span class="cta-mini-tag">Ready to Elevate Your Campaigns?</span>
+                    <h2 class="cta-headline">Stop Guessing. Discover High-ROI Creators Today.</h2>
+                    <p class="cta-subtext">Join brands, talent managers, and creators leveraging dense vector intelligence to streamline influencer discovery.</p>
+                    <div class="cta-buttons-wrap">
+                        <a href="/login?tab=signup" class="btn btn-hero-primary">
+                            <span>Create Free Account</span>
+                            <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
+                        </a>
+                        <a href="/login" class="btn btn-hero-secondary">
+                            <i data-lucide="log-in" style="width: 16px; height: 16px;"></i>
+                            <span>Sign In to Dashboard</span>
+                        </a>
+                    </div>
+                    <div class="cta-guarantee-line">
+                        <i data-lucide="check-circle" style="width: 14px; height: 14px; color: var(--success);"></i>
+                        <span>Includes 1-Click Instant Demo Access &bull; No Credit Card Required</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="home-footer">
+        <div class="footer-container">
+            <div class="footer-top-row">
+                <div class="footer-brand-column">
+                    <div class="brand">
+                        <div class="brand-icon">
+                            <i data-lucide="sparkles"></i>
+                        </div>
+                        <div>
+                            <div class="brand-title">Creator Intelligence</div>
+                            <div class="brand-subtitle">Discovery & Recommendation Platform</div>
+                        </div>
+                    </div>
+                    <p class="footer-tagline">
+                        Next-generation influencer discovery engine combining vector embeddings, real engagement auditing, and LLM-powered campaign strategy.
+                    </p>
+                </div>
+
+                <div class="footer-links-column">
+                    <h4 class="footer-heading">Platform</h4>
+                    <a href="#live-demo">Live Discovery</a>
+                    <a href="#features">Vector Math Engine</a>
+                    <a href="#roi-calculator">ROI Simulator</a>
+                    <a href="#comparison">Platform Comparison</a>
+                    <a href="/dashboard">Discovery Dashboard</a>
+                </div>
+
+                <div class="footer-links-column">
+                    <h4 class="footer-heading">Solutions</h4>
+                    <a href="/login?role=user">For Brands & Agencies</a>
+                    <a href="/login?role=creator">For Content Creators</a>
+                    <a href="/login?role=admin">For Enterprise Admins</a>
+                    <a href="/login">Portal Sign In</a>
+                </div>
+            </div>
+
+            <div class="footer-bottom-row">
+                <div class="footer-copy">
+                    &copy; 2026 Creator Intelligence Platform. All rights reserved.
+                </div>
+                <div class="footer-legal-links">
+                    <a href="#live-demo">Catalog Preview</a>
+                    <a href="/login">Account Login</a>
+                    <a href="/login?tab=signup">Get Started</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Creator Quick Preview Modal -->
+    <div class="modal-backdrop" id="homeCreatorModal" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i data-lucide="sparkles" style="width: 16px; height: 16px; color: var(--primary);"></i>
+                    <span class="modal-title">Creator Intelligence Profile Preview</span>
+                </div>
+                <button type="button" class="modal-close-btn" id="closeHomeModalBtn">
+                    <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="homeModalBody">
+                <!-- Injected via JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/js/home.js?v=20261120_1"></script>
+</body>
+</html>
