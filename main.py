@@ -108,6 +108,49 @@ class AdminAddCreatorRequest(BaseModel):
     engagement_rate: Optional[float] = 0.0
     token: Optional[str] = None
 
+def get_featured_creators_catalog(limit: int = 8) -> List[Dict[str, Any]]:
+    featured = []
+    try:
+        db_creators = database.get_all_creators(limit=limit * 3)
+        if db_creators:
+            for c in db_creators:
+                uname = str(c.get("username", "")).strip().lstrip("@")
+                if not uname or uname.lower() == "nan":
+                    continue
+                f_num = float(c.get("followers") or 0)
+                e_num = float(c.get("engagement_rate") or 0)
+                bio = str(c.get("bio") or "")
+                if len(bio) > 130:
+                    bio = bio[:127] + "..."
+                featured.append({
+                    "username": uname,
+                    "full_name": str(c.get("full_name") or uname),
+                    "category": str(c.get("category") or "Creator"),
+                    "followers": int(f_num),
+                    "followers_formatted": recommendation.format_number(f_num),
+                    "engagement_rate": e_num,
+                    "engagement_formatted": recommendation.format_engagement(e_num),
+                    "follower_tier": str(c.get("follower_tier") or recommendation.get_follower_tier(f_num)),
+                    "bio": bio,
+                    "profile_pic_url": str(c.get("profile_pic_url") or ""),
+                    "is_verified": bool(c.get("is_verified"))
+                })
+                if len(featured) >= limit:
+                    break
+    except Exception:
+        pass
+
+    if not featured:
+        try:
+            engine = recommendation.get_engine()
+            if not engine.creators_df.empty:
+                for _, row in engine.creators_df.head(limit).iterrows():
+                    featured.append(recommendation.clean_creator_output(row.to_dict()))
+        except Exception:
+            pass
+
+    return featured
+
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     user = get_current_user(request)
@@ -116,7 +159,7 @@ async def login_page(request: Request):
             return RedirectResponse(url="/admin", status_code=302)
         elif user["role"] == "creator":
             return RedirectResponse(url="/creator", status_code=302)
-        return RedirectResponse(url="/", status_code=302)
+        return RedirectResponse(url="/dashboard", status_code=302)
     return templates.TemplateResponse(request=request, name="login.html", context={})
 
 @app.post("/api/login")
@@ -132,8 +175,8 @@ async def api_login(req: LoginRequest, response: Response):
         samesite="lax",
         path="/"
     )
-    redirect_map = {"admin": "/admin", "creator": "/creator", "user": "/"}
-    target_url = redirect_map.get(user["role"], "/")
+    redirect_map = {"admin": "/admin", "creator": "/creator", "user": "/dashboard"}
+    target_url = redirect_map.get(user["role"], "/dashboard")
     return {"status": "success", "user": user, "redirect_url": target_url}
 
 @app.post("/api/signup")
@@ -157,8 +200,8 @@ async def api_signup(req: SignupRequest, response: Response):
         samesite="lax",
         path="/"
     )
-    redirect_map = {"admin": "/admin", "creator": "/creator", "user": "/"}
-    target_url = redirect_map.get(user["role"], "/")
+    redirect_map = {"admin": "/admin", "creator": "/creator", "user": "/dashboard"}
+    target_url = redirect_map.get(user["role"], "/dashboard")
     return {"status": "success", "user": user, "redirect_url": target_url}
 
 @app.get("/logout")
@@ -173,7 +216,29 @@ async def api_logout(response: Response):
     return {"status": "success"}
 
 @app.get("/", response_class=HTMLResponse)
-async def home_dashboard(request: Request):
+@app.get("/home", response_class=HTMLResponse)
+async def home_page_view(request: Request):
+    user = get_current_user(request)
+    engine = recommendation.get_engine()
+    catalog_count = len(engine.creators_df) if not engine.creators_df.empty else 0
+    categories = sorted([c for c in engine.creators_df["category"].dropna().unique() if c and str(c).lower() != "nan"]) if not engine.creators_df.empty else []
+    stats = database.get_system_stats()
+    featured = get_featured_creators_catalog(limit=8)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="home.html",
+        context={
+            "user": user,
+            "catalog_count": catalog_count,
+            "categories": categories,
+            "featured_creators": featured,
+            "stats": stats
+        }
+    )
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def user_dashboard_view(request: Request):
     user = get_current_user(request)
     if not user:
         return RedirectResponse(url="/login", status_code=302)
@@ -184,29 +249,7 @@ async def home_dashboard(request: Request):
 
     engine = recommendation.get_engine()
     catalog_count = len(engine.creators_df) if not engine.creators_df.empty else 0
-    categories = sorted([c for c in engine.creators_df["category"].dropna().unique() if c and str(c).lower() != "nan"])
-    summary = database.get_user_summary(user["id"])
-
-    return templates.TemplateResponse(
-        request=request,
-        name="index.html",
-        context={
-            "user": user,
-            "catalog_count": catalog_count,
-            "categories": categories,
-            "user_summary": summary
-        }
-    )
-
-@app.get("/dashboard", response_class=HTMLResponse)
-async def user_dashboard_view(request: Request):
-    user = get_current_user(request)
-    if not user:
-        return RedirectResponse(url="/login", status_code=302)
-
-    engine = recommendation.get_engine()
-    catalog_count = len(engine.creators_df) if not engine.creators_df.empty else 0
-    categories = sorted([c for c in engine.creators_df["category"].dropna().unique() if c and str(c).lower() != "nan"])
+    categories = sorted([c for c in engine.creators_df["category"].dropna().unique() if c and str(c).lower() != "nan"]) if not engine.creators_df.empty else []
     summary = database.get_user_summary(user["id"])
 
     return templates.TemplateResponse(
