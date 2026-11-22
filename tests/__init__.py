@@ -1,0 +1,3 @@
+"""
+Creator Intelligence test suite.
+"""
