@@ -4,6 +4,9 @@ import re
 import hashlib
 from dotenv import load_dotenv
 
+SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(SCRIPTS_DIR)
+load_dotenv(os.path.join(ROOT_DIR, ".env"))
 load_dotenv()
 
 try:
