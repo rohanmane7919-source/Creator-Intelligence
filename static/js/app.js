@@ -371,9 +371,9 @@ async function loadChatHistory() {
         if (history.length === 0) {
             container.innerHTML = `
                 <div class="message-row ai-msg">
-                    <div class="msg-avatar"><i data-lucide="sparkles" style="width: 16px; height: 16px;"></i></div>
+                    <div class="msg-avatar"><i data-lucide="bot" style="width: 15px; height: 15px;"></i></div>
                     <div class="msg-bubble">
-                        Hello! I am your AI Creator Intelligence Advisor. Ask me for creator suggestions, campaign strategies, or lookalike recommendations.
+                        Ask a question about creators, benchmarks, or campaign matches. I'll provide direct, concise answers.
                     </div>
                 </div>
             `;
@@ -416,8 +416,8 @@ function appendAiMessage(text, recommendations) {
     const recsHtml = recommendations && recommendations.length > 0 ? `
         <div class="chat-rec-chips">
             ${recommendations.map(r => `
-                <span class="chat-rec-chip" onclick="searchSimilarCreator('${escapeHtml(r.username)}')">
-                    <i data-lucide="user-check" style="width: 12px; height: 12px;"></i>
+                <span class="chat-rec-chip" onclick="showCreatorModal('${escapeHtml(r.username)}')">
+                    <i data-lucide="user" style="width: 12px; height: 12px;"></i>
                     @${escapeHtml(r.username)} (${escapeHtml(r.category || 'Creator')})
                 </span>
             `).join('')}
@@ -427,7 +427,7 @@ function appendAiMessage(text, recommendations) {
     const row = document.createElement('div');
     row.className = 'message-row ai-msg';
     row.innerHTML = `
-        <div class="msg-avatar"><i data-lucide="sparkles" style="width: 16px; height: 16px;"></i></div>
+        <div class="msg-avatar"><i data-lucide="bot" style="width: 15px; height: 15px;"></i></div>
         <div class="msg-bubble">
             <div>${safeText}</div>
             ${recsHtml}
@@ -447,9 +447,9 @@ function appendLoadingIndicator() {
     row.id = id;
     row.className = 'message-row ai-msg';
     row.innerHTML = `
-        <div class="msg-avatar"><i data-lucide="sparkles" style="width: 16px; height: 16px;"></i></div>
-        <div class="msg-bubble" style="color: var(--text-muted); font-style: italic;">
-            Analyzing creator catalog and strategy...
+        <div class="msg-avatar"><i data-lucide="bot" style="width: 15px; height: 15px;"></i></div>
+        <div class="msg-bubble" style="color: var(--text-muted);">
+            Analyzing query...
         </div>
     `;
     container.appendChild(row);
@@ -489,51 +489,137 @@ async function showCreatorModal(username) {
 
     modal.style.display = 'flex';
     body.innerHTML = `
-        <div style="text-align: center; padding: 2rem;">
-            <div>Loading creator details for @${escapeHtml(username)}...</div>
+        <div style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+            <div>Loading status metrics for @${escapeHtml(username)}...</div>
         </div>
     `;
 
     try {
-        const res = await fetch(`/api/search`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: username, mode: 'similar', top_k: 4 })
-        });
+        const res = await fetch(`/api/creator/${encodeURIComponent(username)}`);
+        if (!res.ok) throw new Error('Creator not found');
         const data = await res.json();
-        const lookalikes = data.results || [];
+        const c = data.creator;
+        if (!c) throw new Error('Invalid creator response');
 
-        body.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
-                <div class="creator-avatar" style="width: 56px; height: 56px; font-size: 1.4rem;">
-                    ${username.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                    <h3 style="font-size: 1.15rem; font-weight: 700;">@${escapeHtml(username)}</h3>
-                    <div style="font-size: 0.85rem; color: var(--text-muted);">Influencer Profile</div>
-                </div>
-            </div>
+        const initial = (c.full_name || c.username || 'C').charAt(0).toUpperCase();
+        const lookalikes = c.lookalikes || [];
 
-            <div>
-                <h4 style="font-size: 0.88rem; font-weight: 700; margin-bottom: 0.5rem;">Algorithmic Lookalikes in Same Niche</h4>
-                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                    ${lookalikes.length > 0 ? lookalikes.map(l => `
-                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.85rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background-color: var(--bg-subtle);">
-                            <div>
-                                <strong style="font-size: 0.85rem;">@${escapeHtml(l.username)}</strong>
-                                <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 0.5rem;">${escapeHtml(l.category)}</span>
+        const lookalikesHtml = lookalikes.length > 0 ? `
+            <div class="creator-modal-lookalikes-section">
+                <h4 class="creator-modal-subtitle">Niche Lookalikes</h4>
+                <div class="creator-modal-lookalikes-list">
+                    ${lookalikes.map(l => `
+                        <div class="lookalike-row" onclick="showCreatorModal('${escapeHtml(l.username)}')">
+                            <div class="lookalike-left">
+                                <div class="creator-avatar-small">${(l.full_name || l.username || 'C').charAt(0).toUpperCase()}</div>
+                                <div>
+                                    <div class="lookalike-handle">@${escapeHtml(l.username)}</div>
+                                    <div class="lookalike-sub">${escapeHtml(l.category || 'Creator')}</div>
+                                </div>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.78rem;">
-                                <span>${escapeHtml(l.followers_formatted)} followers</span>
-                                <span style="color: var(--success); font-weight: 600;">${escapeHtml(l.engagement_formatted)}</span>
+                            <div class="lookalike-right">
+                                <span class="tabular-nums">${escapeHtml(l.followers_formatted)}</span>
+                                <span class="lookalike-eng tabular-nums">${escapeHtml(l.engagement_formatted)}</span>
                             </div>
                         </div>
-                    `).join('') : '<div style="font-size: 0.82rem; color: var(--text-muted);">No lookalikes found.</div>'}
+                    `).join('')}
                 </div>
             </div>
+        ` : '';
+
+        body.innerHTML = `
+            <div class="creator-modal-content">
+                <div class="creator-modal-header">
+                    <div class="creator-avatar" style="width: 54px; height: 54px; font-size: 1.3rem;">
+                        ${initial}
+                    </div>
+                    <div class="creator-modal-title-wrap">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                            <h3 class="creator-modal-name">${escapeHtml(c.full_name || c.username)}</h3>
+                            ${c.is_verified ? '<span class="verified-tag"><i data-lucide="check" style="width: 12px; height: 12px;"></i> Verified</span>' : ''}
+                        </div>
+                        <div class="creator-modal-meta">
+                            <span class="creator-handle">@${escapeHtml(c.username)}</span>
+                            <span class="badge-category">${escapeHtml(c.category)}</span>
+                            <span class="result-pill">${escapeHtml(c.follower_tier)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                ${c.bio ? `<div class="creator-modal-bio">${escapeHtml(c.bio)}</div>` : ''}
+
+                <div class="creator-status-grid">
+                    <div class="status-cell">
+                        <span class="status-cell-label">Total Followers</span>
+                        <span class="status-cell-value tabular-nums">${escapeHtml(c.followers_formatted)}</span>
+                        <span class="status-cell-sub">Exact: ${Number(c.followers || 0).toLocaleString()}</span>
+                    </div>
+                    <div class="status-cell">
+                        <span class="status-cell-label">Engagement Rate</span>
+                        <span class="status-cell-value tabular-nums status-accent">${escapeHtml(c.engagement_formatted)}</span>
+                        <span class="status-cell-sub">Active community ratio</span>
+                    </div>
+                    <div class="status-cell">
+                        <span class="status-cell-label">Average Likes</span>
+                        <span class="status-cell-value tabular-nums">${escapeHtml(c.avg_likes_formatted)}</span>
+                        <span class="status-cell-sub">Per recent publication</span>
+                    </div>
+                    <div class="status-cell">
+                        <span class="status-cell-label">Average Comments</span>
+                        <span class="status-cell-value tabular-nums">${escapeHtml(c.avg_comments_formatted)}</span>
+                        <span class="status-cell-sub">Interaction benchmark</span>
+                    </div>
+                    <div class="status-cell">
+                        <span class="status-cell-label">Follower Tier</span>
+                        <span class="status-cell-value">${escapeHtml(c.follower_tier)}</span>
+                        <span class="status-cell-sub">Audience scale bracket</span>
+                    </div>
+                    <div class="status-cell">
+                        <span class="status-cell-label">Cataloged Posts</span>
+                        <span class="status-cell-value tabular-nums">${c.posts_count > 0 ? Number(c.posts_count).toLocaleString() : 'Indexed'}</span>
+                        <span class="status-cell-sub">Tracked content volume</span>
+                    </div>
+                </div>
+
+                <div class="creator-modal-actions">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="askAiAboutCreator('${escapeHtml(c.username)}')">
+                        <i data-lucide="message-square" style="width: 14px; height: 14px;"></i>
+                        <span>Ask AI about @${escapeHtml(c.username)}</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="searchSimilarCreator('${escapeHtml(c.username)}')">
+                        <i data-lucide="users" style="width: 14px; height: 14px;"></i>
+                        <span>Find Lookalikes</span>
+                    </button>
+                    <a href="${escapeHtml(c.instagram_url)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
+                        <i data-lucide="external-link" style="width: 14px; height: 14px;"></i>
+                        <span>Instagram Profile</span>
+                    </a>
+                </div>
+
+                ${lookalikesHtml}
+            </div>
         `;
+        safeCreateIcons();
     } catch (e) {
-        body.innerHTML = `<div style="color: var(--danger); padding: 1rem;">Unable to load profile data.</div>`;
+        body.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: var(--danger);">
+                <div style="font-weight: 600; margin-bottom: 0.5rem;">Unable to load profile data</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);">Please try again or select another creator.</div>
+            </div>
+        `;
+    }
+}
+
+function askAiAboutCreator(username) {
+    const modal = document.getElementById('creatorModal');
+    if (modal) modal.style.display = 'none';
+
+    const chatInput = document.getElementById('chatInput');
+    const chatForm = document.getElementById('chatForm');
+    if (chatInput && chatForm) {
+        chatInput.value = `Evaluate @${username} for a brand campaign`;
+        const submitEvent = new Event('submit', { cancelable: true });
+        chatForm.dispatchEvent(submitEvent);
     }
 }
 

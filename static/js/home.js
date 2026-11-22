@@ -159,7 +159,7 @@ function renderHomeCreators(creators, query) {
     grid.innerHTML = creators.map(c => {
         const initial = (c.username || 'C')[0].toUpperCase();
         const verified = c.is_verified ? `<span class="verified-badge" title="Verified Creator"><i data-lucide="badge-check"></i></span>` : '';
-        const matchReason = c.match_reason ? `<div class="card-match-reason"><i data-lucide="sparkles"></i> <span>${escapeHtml(c.match_reason)}</span></div>` : '';
+        const matchReason = c.match_reason ? `<div class="card-match-reason"><i data-lucide="check" style="width: 12px; height: 12px;"></i> <span>${escapeHtml(c.match_reason)}</span></div>` : '';
 
         return `
             <div class="creator-showcase-card" onclick="openHomeCreatorModal('${escapeHtml(c.username)}')">
@@ -297,22 +297,17 @@ async function openHomeCreatorModal(username) {
     if (!modal || !modalBody) return;
 
     modalBody.innerHTML = `
-        <div style="text-align: center; padding: 2rem;">
-            <div class="spinner-circle"></div>
-            <p style="margin-top: 0.75rem; color: var(--text-muted);">Fetching intelligence profile for @${escapeHtml(username)}...</p>
+        <div style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+            <div>Loading status metrics for @${escapeHtml(username)}...</div>
         </div>
     `;
     modal.style.display = 'flex';
 
     try {
-        // Query search endpoint for exact handle
-        const res = await fetch('/api/search', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: username, mode: 'auto', top_k: 1 })
-        });
+        const res = await fetch(`/api/creator/${encodeURIComponent(username)}`);
+        if (!res.ok) throw new Error('Creator not found');
         const data = await res.json();
-        const creator = (data.results && data.results.length > 0) ? data.results[0] : null;
+        const creator = data.creator;
 
         if (!creator) {
             modalBody.innerHTML = `
@@ -324,54 +319,70 @@ async function openHomeCreatorModal(username) {
             return;
         }
 
-        const initial = (creator.username || 'C')[0].toUpperCase();
+        const initial = (creator.full_name || creator.username || 'C')[0].toUpperCase();
+        const lookalikes = creator.lookalikes || [];
+
         modalBody.innerHTML = `
             <div class="modal-creator-header">
-                <div class="creator-avatar-badge" style="width: 58px; height: 58px; font-size: 1.5rem;">${initial}</div>
+                <div class="creator-avatar-badge" style="width: 54px; height: 54px; font-size: 1.3rem;">${initial}</div>
                 <div class="modal-creator-meta">
-                    <h3 class="modal-creator-title">${escapeHtml(creator.full_name || creator.username)}</h3>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <h3 class="modal-creator-title">${escapeHtml(creator.full_name || creator.username)}</h3>
+                        ${creator.is_verified ? '<span class="verified-tag"><i data-lucide="check" style="width: 12px; height: 12px;"></i> Verified</span>' : ''}
+                    </div>
                     <div class="creator-handle-text">@${escapeHtml(creator.username)} &bull; <span class="creator-category-chip">${escapeHtml(creator.category || 'Creator')}</span></div>
                     <span class="card-tier-pill" style="margin-top: 0.35rem;">${escapeHtml(creator.follower_tier || 'Tier')}</span>
                 </div>
             </div>
 
-            <div class="modal-bio-quote">
-                "${escapeHtml(creator.bio || 'Verified content creator with sustained community engagement across multimedia formats.')}"
-            </div>
+            ${creator.bio ? `<div class="modal-bio-quote">${escapeHtml(creator.bio)}</div>` : ''}
 
             <div class="modal-stats-grid">
                 <div class="modal-stat-box">
-                    <div class="modal-stat-num">${creator.followers_formatted || '0'}</div>
-                    <div class="modal-stat-lbl">Verified Followers</div>
+                    <div class="modal-stat-num tabular-nums">${creator.followers_formatted || '0'}</div>
+                    <div class="modal-stat-lbl">Followers (${Number(creator.followers || 0).toLocaleString()})</div>
                 </div>
                 <div class="modal-stat-box">
-                    <div class="modal-stat-num" style="color: var(--success);">${creator.engagement_formatted || '0.0%'}</div>
-                    <div class="modal-stat-lbl">Authentic Engagement</div>
+                    <div class="modal-stat-num tabular-nums" style="color: var(--success);">${creator.engagement_formatted || '0.0%'}</div>
+                    <div class="modal-stat-lbl">Engagement Rate</div>
                 </div>
                 <div class="modal-stat-box">
-                    <div class="modal-stat-num" style="color: var(--primary);">High</div>
-                    <div class="modal-stat-lbl">Audience Trust Score</div>
+                    <div class="modal-stat-num tabular-nums">${creator.avg_likes_formatted || '0'}</div>
+                    <div class="modal-stat-lbl">Average Likes</div>
                 </div>
                 <div class="modal-stat-box">
-                    <div class="modal-stat-num">98.2%</div>
-                    <div class="modal-stat-lbl">Vector Alignment</div>
+                    <div class="modal-stat-num tabular-nums">${creator.avg_comments_formatted || '0'}</div>
+                    <div class="modal-stat-lbl">Average Comments</div>
                 </div>
             </div>
 
-            <div class="modal-intelligence-banner">
-                <div class="modal-intel-icon"><i data-lucide="sparkles"></i></div>
-                <div>
-                    <div class="modal-intel-title">Unlock Full Predictive ROI & AI Strategy Brief</div>
-                    <p class="modal-intel-desc">Sign in to query our AI Advisor regarding collaboration briefs, audience demographic breakdowns, and estimated campaign performance for @${escapeHtml(creator.username)}.</p>
+            ${lookalikes.length > 0 ? `
+                <div style="margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                    <div style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.75rem;">Niche Lookalikes</div>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        ${lookalikes.map(l => `
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-card); cursor: pointer;" onclick="openHomeCreatorModal('${escapeHtml(l.username)}')">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <div class="creator-avatar-small" style="width: 24px; height: 24px; font-size: 0.75rem;">${(l.full_name || l.username || 'C')[0].toUpperCase()}</div>
+                                    <span style="font-size: 0.82rem; font-weight: 500;">@${escapeHtml(l.username)}</span>
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(l.category)}</span>
+                                </div>
+                                <div style="font-size: 0.78rem; font-variant-numeric: tabular-nums;">
+                                    <span>${escapeHtml(l.followers_formatted)}</span>
+                                    <span style="color: var(--success); font-weight: 600; margin-left: 0.4rem;">${escapeHtml(l.engagement_formatted)}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
-            </div>
+            ` : ''}
 
-            <div class="modal-actions-row">
+            <div class="modal-actions-row" style="margin-top: 1.25rem;">
                 <a href="/login" class="btn btn-primary" style="flex: 1;">
-                    <i data-lucide="log-in" style="width: 16px; height: 16px;"></i>
-                    <span>Sign In to Collaborate</span>
+                    <i data-lucide="log-in" style="width: 15px; height: 15px;"></i>
+                    <span>Sign In to Access Full Campaign Tools</span>
                 </a>
-                <button type="button" class="btn btn-secondary" onclick="closeHomeCreatorModal()">Close Preview</button>
+                <button type="button" class="btn btn-secondary" onclick="closeHomeCreatorModal()">Close</button>
             </div>
         `;
         safeCreateIcons();

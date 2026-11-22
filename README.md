@@ -17,40 +17,69 @@ Creator Intelligence provides brand marketers and agencies with semantic creator
 - Automated Schema Provisioner (`databasecreator`): Programmatic database initializer utilizing binary PostgreSQL connectors (`psycopg2-binary`) to provision all tables and security policies automatically.
 - Autonomous Recommendation Service (`recommendation.py`): Vector retrieval pipeline combining TF-IDF cosine similarity, normalized engagement rates, and personalized context queries.
 
-## Architecture & File Guide
+## Project Architecture & Directory Structure
 
-- `main.py`: FastAPI server exposing authentication routes, search API, chat completions endpoint, and dashboard views.
-- `database.py`: Database operations module communicating with Supabase PostgreSQL for authentication, search history logging, chat records, and creator profiles.
-- `databasecreator`: Python script utilizing `psycopg2-binary` to create and verify all Supabase tables, row security settings, and demo seed accounts via code.
-- `databasecreator.py`: Standard Python module entrypoint for `databasecreator`.
-- `recommendation.py`: Recommendation engine computing query relevance, lookalike similarity, and user-adaptive 5-card recommendations.
-- `creator_recommender.py`: Core vector catalog and TF-IDF similarity model.
-- `add_new_creator.py`: Live ingestion pipeline to scrape or manually register and index new influencers into the vector store.
-- `requirements.txt`: Python package dependencies.
-- `.env.example`: Example environment variables for Supabase and Groq.
-- `templates/`:
-  - `login.html`: Multi-role login and registration portal with 1-click demo logins.
-  - `index.html`: Unified Brand/User dashboard containing search discovery, filters, personalized recommendations, and the AI chatbot.
-  - `creator.html`: Creator portal displaying profile metrics, editable credentials, and lookalike peer benchmarks.
-  - `admin.html`: Administrator console featuring platform telemetry, search audit logs, user management, and creator indexing.
-- `static/`:
-  - `css/style.css`: Clean, professional design system with light color palette and typography.
-  - `js/app.js`: Modular client logic managing search execution, recommendation refreshes, chat message streaming, and profile modals.
+```
+creator-intelligence/
+├── data/                               # Datasets, catalogs, and data artifacts
+│   ├── creator_profiles.csv            # Creator master catalog
+│   ├── instagram_posts.csv             # Raw Instagram post data
+│   ├── instagram_posts_cleaned.csv     # Cleaned Instagram post data
+│   ├── top_insta_influencers_data.csv  # Kaggle top influencers dataset
+│   ├── youtube_videos.csv              # YouTube videos dataset
+│   └── youtube_videos_new.csv          # Enriched YouTube videos dataset
+├── scripts/                            # Data processing & setup scripts
+│   ├── databasecreator.py              # Automated Supabase database & schema initializer
+│   ├── clean_instagram_posts.py        # Post deduplication & cleaning utility
+│   ├── enrich_instagram_posts.py       # Dataset enrichment script
+│   ├── inspect_youtube_videos.py       # Dataset inspection script
+│   ├── scrape_instagram_posts.py       # Apify Instagram post scraper
+│   ├── scrape_instagram_profiles.py    # Apify Instagram profile scraper
+│   ├── scrape_youtube_videos.py        # Apify YouTube scraper
+│   └── explore_instagram_posts.ipynb   # Exploratory data analysis notebook
+├── src/                                # Core backend and ML recommendation engine
+│   ├── __init__.py                     # Source package initialization
+│   ├── add_new_creator.py              # Dynamic creator profile ingestion service
+│   ├── creator_knowledge.py            # Global influencer domain knowledge mappings
+│   ├── creator_recommender.py          # TF-IDF vector similarity & lookalike engine
+│   ├── database.py                     # Supabase PostgreSQL database operations
+│   └── recommendation.py               # Recommendation service & scoring pipeline
+├── static/                             # Frontend static assets
+│   ├── css/
+│   │   └── style.css                   # Custom responsive CSS design system
+│   └── js/
+│       ├── app.js                      # User dashboard application logic
+│       └── home.js                     # Home landing page interactive logic
+├── templates/                          # Jinja2 HTML templates
+│   ├── admin.html                      # Administrator dashboard & telemetry
+│   ├── creator.html                    # Content creator portal
+│   ├── home.html                       # Public landing page with live sandbox
+│   ├── index.html                      # Authenticated discovery dashboard
+│   └── login.html                      # Multi-role authentication page
+├── tests/                              # Automated test suites
+│   ├── __init__.py
+│   └── test_recommender.py             # Precision & ranking benchmark tests
+├── .env.example                        # Example environment variables
+├── .gitignore                          # Git ignore configuration
+├── main.py                             # Main application entrypoint (FastAPI server)
+├── README.md                           # Documentation
+└── requirements.txt                    # Project dependencies
+```
 
 ## Supabase Database Setup
 
-### Option 1: Automated Setup via `databasecreator`
+### Option 1: Automated Setup via `scripts/databasecreator.py`
 
-Run the `databasecreator` script with your Supabase direct connection string:
+Run the `databasecreator.py` script with your Supabase direct connection string:
 
 ```bash
-python databasecreator postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
+python scripts/databasecreator.py postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
 ```
 
 Or set `DATABASE_URL` in your `.env` file and execute:
 
 ```bash
-python databasecreator
+python scripts/databasecreator.py
 ```
 
 The script will connect using binary PostgreSQL drivers, create all 5 tables, disable row-level security for public API access, and seed the default accounts (`user`, `creator`, `admin`).

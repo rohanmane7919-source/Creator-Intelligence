@@ -18,7 +18,7 @@
         <div class="home-nav-container">
             <a href="/" class="brand">
                 <div class="brand-icon">
-                    <i data-lucide="sparkles"></i>
+                    <i data-lucide="compass"></i>
                 </div>
                 <div>
                     <div class="brand-title">Creator Intelligence</div>
@@ -75,32 +75,31 @@
 
     <!-- Hero Section -->
     <section class="hero-section">
-        <div class="hero-glow-backdrop"></div>
         <div class="hero-container">
             <div class="hero-badge">
-                <span class="hero-badge-dot"></span>
-                <span class="hero-badge-text">Vector-Powered Influencer Intelligence Engine</span>
+                <span class="status-indicator-dot"></span>
+                <span class="hero-badge-text">Influencer discovery & performance benchmarks</span>
             </div>
 
             <h1 class="hero-title">
-                Precision Creator Discovery <br class="desktop-only">
-                <span class="gradient-text">Powered by AI & Vector Math</span>
+                Precision creator discovery across <br class="desktop-only">
+                fashion, beauty, tech, and fitness
             </h1>
 
             <p class="hero-description">
-                Eliminate superficial follower counts and manual spreadsheet guessing. Creator Intelligence leverages dense multi-dimensional vector embeddings, authentic engagement curves, and automated lookalike matching to identify the ideal creators for your campaigns in milliseconds.
+                Evaluate creator performance with verified engagement rates, audience tiers, and lookalike recommendations based on real audience data.
             </p>
 
             <div class="hero-cta-group">
                 <a href="/login" class="btn btn-hero-primary">
-                    <i data-lucide="sparkles" style="width: 18px; height: 18px;"></i>
+                    <i data-lucide="compass" style="width: 17px; height: 17px;"></i>
                     <span>Launch Discovery Platform</span>
-                    <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
+                    <i data-lucide="arrow-right" style="width: 15px; height: 15px;"></i>
                 </a>
 
                 <a href="#live-demo" class="btn btn-hero-secondary">
-                    <i data-lucide="search" style="width: 17px; height: 17px;"></i>
-                    <span>Try Interactive Demo Below</span>
+                    <i data-lucide="search" style="width: 16px; height: 16px;"></i>
+                    <span>Explore Catalog Below</span>
                 </a>
             </div>
 
@@ -161,7 +160,7 @@
                 <div class="search-mode-bar">
                     <div class="mode-pills">
                         <button type="button" class="home-mode-btn active" data-mode="auto">
-                            <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i>
+                            <i data-lucide="search" style="width: 14px; height: 14px;"></i>
                             <span>Topic & Campaign Semantic Search</span>
                         </button>
                         <button type="button" class="home-mode-btn" data-mode="similar">
@@ -170,7 +169,7 @@
                         </button>
                     </div>
                     <span class="search-live-status">
-                        <span class="status-pulse"></span>
+                        <span class="status-indicator-dot"></span>
                         <span id="homeResultCount">{{ featured_creators|length }} Creators Ready</span>
                     </span>
                 </div>
@@ -190,28 +189,28 @@
                     <div class="home-category-select-wrap">
                         <select id="homeCategorySelect" class="home-category-select">
                             <option value="">All Categories</option>
-                            {% for cat in categories %}
-                                <option value="{{ cat }}">{{ cat }}</option>
-                            {% endfor %}
+                            <option value="Fashion">Fashion</option>
+                            <option value="Beauty">Beauty</option>
+                            <option value="Technology">Technology</option>
+                            <option value="Fitness">Fitness</option>
                         </select>
                     </div>
 
                     <button type="button" class="btn btn-primary btn-search-execute" id="homeSearchBtn">
-                        <i data-lucide="zap" style="width: 16px; height: 16px;"></i>
-                        <span>Search Catalog</span>
+                        <i data-lucide="search" style="width: 15px; height: 15px;"></i>
+                        <span>Search</span>
                     </button>
                 </div>
 
                 <!-- Suggestion Chips -->
                 <div class="home-suggestions-bar">
-                    <span class="suggestions-label">Try Examples:</span>
+                    <span class="suggestions-label">Focus Areas:</span>
                     <div class="suggestions-chips-wrap">
-                        <button type="button" class="suggestion-chip" data-query="Sports & Football" data-mode="auto">⚽ Sports & Football</button>
-                        <button type="button" class="suggestion-chip" data-query="Fashion & Beauty" data-mode="auto">💄 Fashion & Beauty</button>
-                        <button type="button" class="suggestion-chip" data-query="cristiano" data-mode="similar">🎯 Cristiano Ronaldo Lookalikes</button>
-                        <button type="button" class="suggestion-chip" data-query="Technology" data-mode="auto">💻 Tech Reviewers</button>
-                        <button type="button" class="suggestion-chip" data-query="Acting & Fitness" data-mode="auto">🏋️ Fitness & Wellness</button>
-                        <button type="button" class="suggestion-chip" data-query="kyliejenner" data-mode="similar">🌟 Kylie Jenner Lookalikes</button>
+                        <button type="button" class="suggestion-chip" data-query="Fashion" data-mode="auto">Fashion</button>
+                        <button type="button" class="suggestion-chip" data-query="Beauty" data-mode="auto">Beauty</button>
+                        <button type="button" class="suggestion-chip" data-query="Technology" data-mode="auto">Technology</button>
+                        <button type="button" class="suggestion-chip" data-query="Fitness" data-mode="auto">Fitness</button>
+                        <button type="button" class="suggestion-chip" data-query="cristiano" data-mode="similar">@cristiano lookalikes</button>
                     </div>
                 </div>
 
@@ -530,7 +529,7 @@
                 <div class="solution-card featured-solution">
                     <div class="solution-badge-pill">Most Popular</div>
                     <div class="solution-header">
-                        <div class="solution-icon-wrap" style="background-color: var(--primary); color: #ffffff;"><i data-lucide="sparkles"></i></div>
+                        <div class="solution-icon-wrap" style="background-color: var(--primary); color: #ffffff;"><i data-lucide="award"></i></div>
                         <span class="solution-role-tag">For Content Creators</span>
                     </div>
                     <h3 class="solution-title">Benchmark Metrics & Get Discovered by Top Brands</h3>
@@ -669,7 +668,7 @@
                 <div class="footer-brand-column">
                     <div class="brand">
                         <div class="brand-icon">
-                            <i data-lucide="sparkles"></i>
+                            <i data-lucide="compass"></i>
                         </div>
                         <div>
                             <div class="brand-title">Creator Intelligence</div>
@@ -717,7 +716,7 @@
         <div class="modal-card">
             <div class="modal-header">
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <i data-lucide="sparkles" style="width: 16px; height: 16px; color: var(--primary);"></i>
+                    <i data-lucide="compass" style="width: 16px; height: 16px; color: var(--primary);"></i>
                     <span class="modal-title">Creator Intelligence Profile Preview</span>
                 </div>
                 <button type="button" class="modal-close-btn" id="closeHomeModalBtn">

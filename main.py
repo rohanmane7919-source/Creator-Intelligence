@@ -1,6 +1,7 @@
 import os
 import re
 from typing import Optional, List, Dict, Any
+import pandas as pd
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -11,9 +12,15 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
-import database
-import recommendation
-from add_new_creator import add_new_creator
+import sys
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SRC_DIR = os.path.join(BASE_DIR, "src")
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
+
+from src import database, recommendation
+from src.add_new_creator import add_new_creator
 
 try:
     from groq import Groq
@@ -215,13 +222,15 @@ async def api_logout(response: Response):
     response.delete_cookie(key="session_user_id", path="/")
     return {"status": "success"}
 
+ALLOWED_CATEGORIES = ["Fashion", "Beauty", "Technology", "Fitness"]
+
 @app.get("/", response_class=HTMLResponse)
 @app.get("/home", response_class=HTMLResponse)
 async def home_page_view(request: Request):
     user = get_current_user(request)
     engine = recommendation.get_engine()
     catalog_count = len(engine.creators_df) if not engine.creators_df.empty else 0
-    categories = sorted([c for c in engine.creators_df["category"].dropna().unique() if c and str(c).lower() != "nan"]) if not engine.creators_df.empty else []
+    categories = ALLOWED_CATEGORIES
     stats = database.get_system_stats()
     featured = get_featured_creators_catalog(limit=8)
 
@@ -249,7 +258,7 @@ async def user_dashboard_view(request: Request):
 
     engine = recommendation.get_engine()
     catalog_count = len(engine.creators_df) if not engine.creators_df.empty else 0
-    categories = sorted([c for c in engine.creators_df["category"].dropna().unique() if c and str(c).lower() != "nan"]) if not engine.creators_df.empty else []
+    categories = ALLOWED_CATEGORIES
     summary = database.get_user_summary(user["id"])
 
     return templates.TemplateResponse(
@@ -390,16 +399,12 @@ async def api_chat(req: ChatRequest, request: Request):
     suggested_influencers = search_hits.get("results", [])
 
     system_instruction = (
-        "You are the Creator Intelligence AI Advisor. Answer user questions about influencer marketing, "
-        "creator discovery, campaign strategy, and brand partnerships. Provide concise, expert, actionable advice "
-        "in 1-2 short paragraphs. Cite recommended creators when appropriate."
+        "You are the Creator Intelligence AI Assistant. Give direct, concise answers in 1 to 2 short sentences maximum. "
+        "Never over-explain, avoid fluff or introductory filler, and answer the question directly. "
+        "Mention 1 or 2 creator handles when asked for recommendations."
     )
     if existing_summary:
-        system_instruction += f"\nKnown user campaign preferences: {existing_summary}."
-    if recent_searches:
-        s_list = [s["query"] for s in recent_searches if s.get("query")]
-        if s_list:
-            system_instruction += f"\nUser recent search topics: {', '.join(s_list[:4])}."
+        system_instruction += f" Context: {existing_summary}."
 
     ai_reply = ""
     if groq_client:
@@ -425,8 +430,8 @@ async def api_chat(req: ChatRequest, request: Request):
                 completion = groq_client.chat.completions.create(
                     model=model_name,
                     messages=chat_messages_payload,
-                    max_tokens=300,
-                    temperature=0.7,
+                    max_tokens=80,
+                    temperature=0.5,
                     timeout=8.0
                 )
                 txt = str(completion.choices[0].message.content).strip()
@@ -438,17 +443,10 @@ async def api_chat(req: ChatRequest, request: Request):
 
     if not ai_reply:
         if suggested_influencers:
-            names = ", ".join([f"@{i['username']} ({i['category']})" for i in suggested_influencers[:3]])
-            ai_reply = (
-                f"Based on your query regarding '{raw_message}', consider collaborating with: {names}. "
-                "These creators demonstrate strong audience trust in this segment. Review their past brand partnerships "
-                "and average engagement to ensure ideal campaign alignment."
-            )
+            names = ", ".join([f"@{i['username']} ({i['category']})" for i in suggested_influencers[:2]])
+            ai_reply = f"Top creators for this: {names}. Both deliver high engagement in this niche."
         else:
-            ai_reply = (
-                f"Regarding '{raw_message}', prioritize creators who maintain an active community dialogue. "
-                "Focus on mid-tier creators with engagement rates exceeding 2.5% for authentic conversions."
-            )
+            ai_reply = f"For '{raw_message}', prioritize mid-tier creators with engagement rates above 2.5%."
 
     database.save_chat_message(user_id, "user", raw_message)
     database.save_chat_message(user_id, "assistant", ai_reply)
@@ -524,6 +522,112 @@ async def api_admin_add_creator(req: AdminAddCreatorRequest, request: Request):
         return {"status": "success", "message": f"Creator @{uname} successfully indexed", "creator": record}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/creator/{username}")
+async def api_get_creator_details(username: str):
+    clean_username = username.strip().lower().lstrip("@")
+    if not clean_username:
+        raise HTTPException(status_code=400, detail="Invalid username")
+
+    creator_record = database.get_creator_by_username(clean_username)
+
+    engine = recommendation.get_engine()
+    df_match = {}
+    if not engine.creators_df.empty:
+        matches = engine.creators_df[engine.creators_df["username"].str.lower() == clean_username]
+        if not matches.empty:
+            df_match = matches.iloc[0].to_dict()
+
+    if not creator_record and not df_match:
+        raise HTTPException(status_code=404, detail=f"Creator '@{clean_username}' not found")
+
+    def _val(v, default=0.0):
+        if v is None or pd.isna(v):
+            return default
+        try:
+            return float(v)
+        except Exception:
+            return default
+
+    def _val_int(v, default=0):
+        if v is None or pd.isna(v):
+            return default
+        try:
+            return int(float(v))
+        except Exception:
+            return default
+
+    raw_f = (creator_record.get("followers") if creator_record else None) or df_match.get("followers") or df_match.get("followersCount")
+    f_num = _val(raw_f, 0.0)
+
+    raw_eng = (creator_record.get("engagement_rate") if creator_record else None) or df_match.get("engagement_rate")
+    eng_num = _val(raw_eng, 0.0)
+
+    raw_likes = (creator_record.get("avg_likes") if creator_record else None) or df_match.get("avg_likes")
+    avg_likes_num = _val(raw_likes, 0.0)
+
+    raw_comments = df_match.get("avg_comments")
+    avg_comments_num = _val(raw_comments, 0.0)
+
+    raw_posts = df_match.get("posts_count") or df_match.get("postsCount")
+    posts_count_num = _val_int(raw_posts, 0)
+
+    raw_name = (creator_record.get("full_name") if creator_record else None) or df_match.get("fullName") or df_match.get("full_name")
+    full_name = str(raw_name) if raw_name and not pd.isna(raw_name) else clean_username.capitalize()
+
+    raw_bio = (creator_record.get("bio") if creator_record else None) or df_match.get("biography") or df_match.get("bio")
+    bio = str(raw_bio) if raw_bio and not pd.isna(raw_bio) else ""
+
+    raw_cat = (creator_record.get("category") if creator_record else None) or df_match.get("category")
+    category = str(raw_cat).strip() if raw_cat and not pd.isna(raw_cat) and str(raw_cat).lower() != "nan" else "Creator"
+
+    tier = str(
+        (creator_record.get("follower_tier") if creator_record else None)
+        or df_match.get("follower_tier")
+        or recommendation.get_follower_tier(f_num)
+    )
+    is_verified = bool(
+        (creator_record.get("is_verified") if creator_record else False)
+        or df_match.get("verified")
+        or df_match.get("is_verified")
+    )
+    profile_pic = str(
+        (creator_record.get("profile_pic_url") if creator_record else None)
+        or df_match.get("profilePicUrl")
+        or df_match.get("profile_pic_url")
+        or ""
+    )
+
+    lookalikes = []
+    try:
+        if not engine.creators_df.empty:
+            raw_sim = engine.recommend_similar_creators(clean_username, top_k=4)
+            lookalikes = [recommendation.clean_creator_output(r, "Niche lookalike") for r in raw_sim if r.get("username", "").lower() != clean_username]
+    except Exception:
+        pass
+
+    creator_details = {
+        "username": clean_username,
+        "full_name": full_name,
+        "bio": bio,
+        "category": category,
+        "followers": int(f_num),
+        "followers_formatted": recommendation.format_number(f_num),
+        "engagement_rate": eng_num,
+        "engagement_formatted": recommendation.format_engagement(eng_num),
+        "follower_tier": tier,
+        "avg_likes": int(avg_likes_num),
+        "avg_likes_formatted": recommendation.format_number(avg_likes_num),
+        "avg_comments": int(avg_comments_num),
+        "avg_comments_formatted": recommendation.format_number(avg_comments_num),
+        "posts_count": posts_count_num,
+        "is_verified": is_verified,
+        "profile_pic_url": profile_pic,
+        "instagram_url": f"https://www.instagram.com/{clean_username}/",
+        "lookalikes": lookalikes[:4]
+    }
+
+    return {"status": "success", "creator": creator_details}
 
 @app.get("/api/stats")
 async def api_stats():

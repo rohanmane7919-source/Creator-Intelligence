@@ -2,8 +2,12 @@ import os
 import pandas as pd
 from apify_client import ApifyClient
 
-POSTS_CSV = "instagram_posts.csv"
-PROFILES_CSV = "creator_profiles.csv"
+SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(SCRIPTS_DIR)
+DATA_DIR = os.path.join(ROOT_DIR, "data")
+
+POSTS_CSV = os.path.join(DATA_DIR, "instagram_posts.csv") if os.path.exists(os.path.join(DATA_DIR, "instagram_posts.csv")) else "instagram_posts.csv"
+PROFILES_CSV = os.path.join(DATA_DIR, "creator_profiles.csv") if os.path.exists(os.path.join(DATA_DIR, "creator_profiles.csv")) else "creator_profiles.csv"
 
 # Actor ID from Apify Store. This Actor accepts Instagram usernames/URLs.
 ACTOR_ID = "apify/instagram-profile-scraper"

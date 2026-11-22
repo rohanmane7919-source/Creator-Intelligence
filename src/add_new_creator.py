@@ -3,7 +3,10 @@ import sys
 import argparse
 import pandas as pd
 from typing import Optional, Dict, Any, List
-from creator_recommender import CreatorRecommender, PROFILES_CSV, POSTS_CSV
+try:
+    from .creator_recommender import CreatorRecommender, PROFILES_CSV, POSTS_CSV
+except ImportError:
+    from creator_recommender import CreatorRecommender, PROFILES_CSV, POSTS_CSV
 
 try:
     from apify_client import ApifyClient

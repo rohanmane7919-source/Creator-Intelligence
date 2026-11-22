@@ -4,8 +4,12 @@ from typing import Optional, List, Dict, Any
 import pandas as pd
 import numpy as np
 
-import database
-from creator_recommender import CreatorRecommender, INDEX_FILE, get_follower_tier
+try:
+    from . import database
+    from .creator_recommender import CreatorRecommender, INDEX_FILE, get_follower_tier, PROFILES_CSV, POSTS_CSV
+except ImportError:
+    import database
+    from creator_recommender import CreatorRecommender, INDEX_FILE, get_follower_tier, PROFILES_CSV, POSTS_CSV
 
 recommender_instance: Optional[CreatorRecommender] = None
 
@@ -13,12 +17,11 @@ def get_engine() -> CreatorRecommender:
     global recommender_instance
     if recommender_instance is None:
         recommender_instance = CreatorRecommender()
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        index_path = os.path.join(base_dir, INDEX_FILE)
+        index_path = INDEX_FILE
         if os.path.exists(index_path):
             recommender_instance.load_index(index_path)
         else:
-            recommender_instance.build_creator_catalog()
+            recommender_instance.build_creator_catalog(profiles_path=PROFILES_CSV, posts_path=POSTS_CSV)
             recommender_instance.fit()
             recommender_instance.save_index(index_path)
     return recommender_instance
@@ -136,8 +139,17 @@ def search_influencers(
         followers_val = float(row.get("followers", 0) or 0)
         eng_val = float(row.get("engagement_rate", 0) or 0)
 
-        if category and category.lower() not in cat:
-            continue
+        if category:
+            cat_target = category.lower().strip()
+            cat_aliases = {
+                "fashion": ["fashion", "style", "apparel", "model", "clothing"],
+                "beauty": ["beauty", "makeup", "cosmetics", "skincare", "glam"],
+                "technology": ["technology", "tech", "gadget", "software", "code", "ai", "hardware", "engineering"],
+                "fitness": ["fitness", "gym", "workout", "bodybuilding", "trainer", "athlet", "sport", "health"]
+            }
+            aliases = cat_aliases.get(cat_target, [cat_target])
+            if not any(a in cat or a in bio for a in aliases):
+                continue
         if follower_tier and follower_tier.lower() not in f_tier:
             continue
         if min_followers is not None and followers_val < min_followers:
