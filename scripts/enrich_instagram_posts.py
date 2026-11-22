@@ -1,8 +1,13 @@
+import os
 import pandas as pd
 
-POSTS_CSV = "instagram_posts.csv"       # Your existing 1,009-row dataset
-PROFILES_CSV = "creator_profiles.csv"   # Apify profile-scraper output
-OUTPUT_CSV = "posts_enriched.csv"
+SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(SCRIPTS_DIR)
+DATA_DIR = os.path.join(ROOT_DIR, "data")
+
+POSTS_CSV = os.path.join(DATA_DIR, "instagram_posts.csv") if os.path.exists(os.path.join(DATA_DIR, "instagram_posts.csv")) else "instagram_posts.csv"
+PROFILES_CSV = os.path.join(DATA_DIR, "creator_profiles.csv") if os.path.exists(os.path.join(DATA_DIR, "creator_profiles.csv")) else "creator_profiles.csv"
+OUTPUT_CSV = os.path.join(DATA_DIR, "posts_enriched.csv")
 
 posts = pd.read_csv(POSTS_CSV)
 profiles = pd.read_csv(PROFILES_CSV)
