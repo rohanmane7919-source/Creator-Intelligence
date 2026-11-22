@@ -32,7 +32,10 @@ def scrape_youtube():
         return
 
     df = pd.json_normalize(items)
-    output_file = "youtube_videos_new.csv"
+    SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
+    ROOT_DIR = os.path.dirname(SCRIPTS_DIR)
+    DATA_DIR = os.path.join(ROOT_DIR, "data")
+    output_file = os.path.join(DATA_DIR, "youtube_videos_new.csv") if os.path.exists(DATA_DIR) else "youtube_videos_new.csv"
     df.to_csv(output_file, index=False, encoding="utf-8-sig")
 
     print(f"Scraped {len(df)} items.")
