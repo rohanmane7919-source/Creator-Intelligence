@@ -101,7 +101,12 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="creatorCategory">Category / Niche</label>
-                            <input type="text" id="creatorCategory" class="form-input" value="{{ creator.category or '' }}" required>
+                            <select id="creatorCategory" class="select-input" required>
+                                <option value="Fashion" {% if creator.category == 'Fashion' %}selected{% endif %}>Fashion</option>
+                                <option value="Beauty" {% if creator.category == 'Beauty' %}selected{% endif %}>Beauty</option>
+                                <option value="Technology" {% if creator.category == 'Technology' %}selected{% endif %}>Technology</option>
+                                <option value="Fitness" {% if creator.category == 'Fitness' %}selected{% endif %}>Fitness</option>
+                            </select>
                         </div>
                         <div class="form-group" style="grid-column: 1 / -1;">
                             <label class="form-label" for="creatorBio">Bio / Value Proposition</label>
