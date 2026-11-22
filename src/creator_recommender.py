@@ -7,9 +7,24 @@ from typing import List, Dict, Optional, Any
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-INDEX_FILE = "creator_vector_index.pkl"
-PROFILES_CSV = "creator_profiles.csv"
-POSTS_CSV = "instagram_posts.csv"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(BASE_DIR) if os.path.basename(BASE_DIR) == "src" else BASE_DIR
+DATA_DIR = os.path.join(ROOT_DIR, "data")
+
+def _resolve_data_path(filename: str) -> str:
+    data_path = os.path.join(DATA_DIR, filename)
+    if os.path.exists(data_path):
+        return data_path
+    if os.path.exists(filename):
+        return os.path.abspath(filename)
+    root_path = os.path.join(ROOT_DIR, filename)
+    if os.path.exists(root_path):
+        return root_path
+    return data_path
+
+INDEX_FILE = _resolve_data_path("creator_vector_index.pkl")
+PROFILES_CSV = _resolve_data_path("creator_profiles.csv")
+POSTS_CSV = _resolve_data_path("instagram_posts.csv")
 
 def get_follower_tier(followers: float) -> str:
     """Categorize creators by follower count tiers."""
@@ -226,7 +241,10 @@ class CreatorRecommender:
         kdf["tracked_posts_count"] = 0
 
         # Known global creator knowledge base for high-precision semantic matching
-        from creator_knowledge import KNOWN_CREATOR_PROFILES
+        try:
+            from .creator_knowledge import KNOWN_CREATOR_PROFILES
+        except ImportError:
+            from creator_knowledge import KNOWN_CREATOR_PROFILES
 
         def enrich_creator_row(row):
             uname = row["username"]
