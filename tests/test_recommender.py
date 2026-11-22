@@ -1,11 +1,19 @@
 import os
 import sys
+
+TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(TESTS_DIR)
+SRC_DIR = os.path.join(ROOT_DIR, "src")
+DATA_DIR = os.path.join(ROOT_DIR, "data")
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
+
 import numpy as np
 import pandas as pd
 from typing import List, Dict, Any, Tuple
 from creator_recommender import CreatorRecommender, INDEX_FILE
 
-DATASET_CSV = "top_insta_influencers_data.csv"
+DATASET_CSV = os.path.join(DATA_DIR, "top_insta_influencers_data.csv") if os.path.exists(os.path.join(DATA_DIR, "top_insta_influencers_data.csv")) else "top_insta_influencers_data.csv"
 
 # Benchmark query test suite: Queries and their expected domain categories/keywords
 QUERY_BENCHMARKS = [
