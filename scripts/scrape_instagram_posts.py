@@ -30,8 +30,11 @@ def scrape_instagram():
         return
 
     df = pd.json_normalize(items)
-    output_file = "instagram_posts.csv"
-    df.to_csv(output_file, index=False, encoding="utf-8-sig",mode = 'a')
+    SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
+    ROOT_DIR = os.path.dirname(SCRIPTS_DIR)
+    DATA_DIR = os.path.join(ROOT_DIR, "data")
+    output_file = os.path.join(DATA_DIR, "instagram_posts.csv") if os.path.exists(DATA_DIR) else "instagram_posts.csv"
+    df.to_csv(output_file, index=False, encoding="utf-8-sig", mode='a')
 
     print(f"Scraped {len(df)} posts.")
     print(f"CSV saved to: {os.path.abspath(output_file)}")
