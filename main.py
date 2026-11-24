@@ -404,13 +404,31 @@ async def api_chat(req: ChatRequest, request: Request):
     search_hits = recommendation.search_influencers(raw_message, top_k=3)
     suggested_influencers = search_hits.get("results", [])
 
+    catalog_context = ""
+    if suggested_influencers:
+        candidate_lines = []
+        for c in suggested_influencers:
+            suitability_line = recommendation.generate_suitability_reason(c, raw_message)
+            c["match_reason"] = suitability_line
+            candidate_lines.append(
+                f"- @{c['username']} ({c.get('full_name', '')}, {c.get('category')}, {c.get('followers_formatted')} followers, {c.get('engagement_formatted')} eng): {suitability_line}"
+            )
+        catalog_context = "Verified catalog candidates:\n" + "\n".join(candidate_lines)
+
     system_instruction = (
-        "You are the Creator Intelligence AI Assistant. Give direct, concise answers in 1 to 2 short sentences maximum. "
-        "Never over-explain, avoid fluff or introductory filler, and answer the question directly. "
-        "Mention 1 or 2 creator handles when asked for recommendations."
+        "You are the Creator Intelligence AI Matchmaker and advisor. "
+        "Your mission is to help the user identify and select the best creators for their needs.\n"
+        "STRICT REQUIREMENTS:\n"
+        "1. For EVERY creator recommended, you MUST include exactly one dedicated line explaining why this creator is suitable for the user (audience fit, engagement strength, content specialty).\n"
+        "2. Format each recommended creator as a bullet:\n"
+        "• @handle (Category) - [One-line reason why this creator is suitable for you]\n"
+        "3. Recommend 2 to 3 relevant creators from the verified catalog candidates.\n"
+        "4. Keep the total answer concise, direct, and without conversational filler."
     )
     if existing_summary:
-        system_instruction += f" Context: {existing_summary}."
+        system_instruction += f"\nUser interest profile: {existing_summary}."
+    if catalog_context:
+        system_instruction += f"\n{catalog_context}"
 
     ai_reply = ""
     if groq_client:
@@ -436,8 +454,8 @@ async def api_chat(req: ChatRequest, request: Request):
                 completion = groq_client.chat.completions.create(
                     model=model_name,
                     messages=chat_messages_payload,
-                    max_tokens=80,
-                    temperature=0.5,
+                    max_tokens=220,
+                    temperature=0.4,
                     timeout=8.0
                 )
                 txt = str(completion.choices[0].message.content).strip()
@@ -449,10 +467,13 @@ async def api_chat(req: ChatRequest, request: Request):
 
     if not ai_reply:
         if suggested_influencers:
-            names = ", ".join([f"@{i['username']} ({i['category']})" for i in suggested_influencers[:2]])
-            ai_reply = f"Top creators for this: {names}. Both deliver high engagement in this niche."
+            lines = []
+            for c in suggested_influencers[:3]:
+                suitability = c.get("match_reason") or recommendation.generate_suitability_reason(c, raw_message)
+                lines.append(f"• @{c['username']} ({c.get('category')}): {suitability}")
+            ai_reply = "Here are the best creators matching your criteria:\n" + "\n".join(lines)
         else:
-            ai_reply = f"For '{raw_message}', prioritize mid-tier creators with engagement rates above 2.5%."
+            ai_reply = f"For '{raw_message}', prioritize creators with verified domain expertise and engagement above 2.5% for optimal conversion."
 
     database.save_chat_message(user_id, "user", raw_message)
     database.save_chat_message(user_id, "assistant", ai_reply)
