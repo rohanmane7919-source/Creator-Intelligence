@@ -43,9 +43,42 @@ def format_engagement(val: float) -> str:
     pct = val * 100 if val <= 1.0 else val
     return f"{pct:.2f}%"
 
+def generate_suitability_reason(row: Dict[str, Any], query: str = "") -> str:
+    """Generates a dedicated, single-line explanation of why this creator is suitable for the user."""
+    cat = str(row.get("category") or "General")
+    cat_l = cat.lower()
+    eng_val = float(row.get("engagement_rate", 0) or 0)
+    eng = row.get("engagement_formatted") or format_engagement(eng_val)
+    f_val = float(row.get("followers", 0) or 0)
+    followers = row.get("followers_formatted") or format_number(f_val)
+    bio = str(row.get("bio") or row.get("biography") or "").strip()
+    bio_l = bio.lower()
+
+    if "tech" in cat_l:
+        if bool(re.search(r"\bai\b", bio_l)) or "neural" in bio_l or "deep learning" in bio_l:
+            return f"Suitable for AI, software innovation, and deep-tech education reaching {followers} tech professionals."
+        return f"Suitable for in-depth tech teardowns, trusted hardware benchmarks, and gadget reviews with {eng} engagement."
+    elif "fit" in cat_l or "sport" in cat_l:
+        if "olympia" in bio_l or "bodybuild" in bio_l or "heavy" in bio_l or "strength" in bio_l:
+            return f"Suitable for high-intensity bodybuilding, heavy lifting, and athletic performance campaigns with {followers} followers."
+        return f"Suitable for accessible workout routines, fat-loss challenges, and active community fitness motivation ({eng} engagement)."
+    elif "beauty" in cat_l or "cosmetic" in cat_l:
+        if "skincare" in bio_l or "serum" in bio_l or "barrier" in bio_l or "sunscreen" in bio_l:
+            return f"Suitable for skincare education, ingredient breakdowns, and glowing skin routines with {followers} fans."
+        return f"Suitable for transformative makeup artistry, glam tutorials, and high-impact cosmetic testing ({eng} engagement)."
+    elif "fashion" in cat_l or "model" in cat_l:
+        if "couture" in bio_l or "runway" in bio_l or "luxury" in bio_l or "paris" in bio_l:
+            return f"Suitable for luxury fashion houses, haute couture styling, and runway-tier brand partnerships."
+        return f"Suitable for modern streetwear, trendy outfit lookbooks, and aesthetic lifestyle styling ({eng} engagement)."
+    elif eng_val >= 0.04:
+        return f"Suitable for high-conversion ROI campaigns driven by an outstanding {eng} audience engagement rate."
+    else:
+        return f"Suitable for targeted {cat} partnerships with an active audience of {followers} followers and {eng} engagement."
+
 def clean_creator_output(row: Dict[str, Any], reason: str = "") -> Dict[str, Any]:
     followers_num = float(row.get("followers", 0) or 0)
     eng_num = float(row.get("engagement_rate", 0) or 0)
+    final_reason = reason.strip() if reason and reason.strip() else generate_suitability_reason(row)
     return {
         "username": str(row.get("username", "")).strip().lstrip("@"),
         "full_name": str(row.get("full_name") or row.get("fullName") or row.get("username", "")),
@@ -57,7 +90,7 @@ def clean_creator_output(row: Dict[str, Any], reason: str = "") -> Dict[str, Any
         "engagement_formatted": format_engagement(eng_num),
         "follower_tier": str(row.get("follower_tier") or get_follower_tier(followers_num)),
         "profile_pic_url": str(row.get("profilePicUrl") or row.get("profile_pic_url") or ""),
-        "match_reason": reason
+        "match_reason": final_reason
     }
 
 def search_influencers(
@@ -188,7 +221,8 @@ def search_influencers(
                 keyword_score += 10.0
                 reason = "Content bio keyword match"
 
-            tokens = [t for t in re.findall(r'[a-z0-9]{3,}', q_lower) if len(t) >= 3]
+            stop_words = {"the", "and", "for", "with", "who", "are", "best", "some", "what", "which", "from", "that", "this", "can", "you", "all", "about", "have", "has", "more", "give", "show", "tell", "find", "good", "most"}
+            tokens = [t for t in re.findall(r'[a-z0-9]{3,}', q_lower) if len(t) >= 3 and t not in stop_words]
             for token in tokens:
                 if token in uname:
                     keyword_score += 8.0
@@ -220,7 +254,7 @@ def search_influencers(
     scored_candidates.sort(key=lambda x: x["score"], reverse=True)
 
     if not scored_candidates and raw_query:
-        tokens = [t for t in re.findall(r'[a-z0-9]{3,}', q_lower) if len(t) >= 3]
+        tokens = [t for t in re.findall(r'[a-z0-9]{3,}', q_lower) if len(t) >= 3 and t not in stop_words]
         for idx, row in df.iterrows():
             bio = str(row.get("bio", "")).lower()
             cat = str(row.get("category", "")).lower()
