@@ -43,9 +43,42 @@ def format_engagement(val: float) -> str:
     pct = val * 100 if val <= 1.0 else val
     return f"{pct:.2f}%"
 
+def generate_suitability_reason(row: Dict[str, Any], query: str = "") -> str:
+    """Generates a dedicated, single-line explanation of why this creator is suitable for the user."""
+    cat = str(row.get("category") or "General")
+    cat_l = cat.lower()
+    eng_val = float(row.get("engagement_rate", 0) or 0)
+    eng = row.get("engagement_formatted") or format_engagement(eng_val)
+    f_val = float(row.get("followers", 0) or 0)
+    followers = row.get("followers_formatted") or format_number(f_val)
+    bio = str(row.get("bio") or row.get("biography") or "").strip()
+    bio_l = bio.lower()
+
+    if "tech" in cat_l:
+        if bool(re.search(r"\bai\b", bio_l)) or "neural" in bio_l or "deep learning" in bio_l:
+            return f"Suitable for AI, software innovation, and deep-tech education reaching {followers} tech professionals."
+        return f"Suitable for in-depth tech teardowns, trusted hardware benchmarks, and gadget reviews with {eng} engagement."
+    elif "fit" in cat_l or "sport" in cat_l:
+        if "olympia" in bio_l or "bodybuild" in bio_l or "heavy" in bio_l or "strength" in bio_l:
+            return f"Suitable for high-intensity bodybuilding, heavy lifting, and athletic performance campaigns with {followers} followers."
+        return f"Suitable for accessible workout routines, fat-loss challenges, and active community fitness motivation ({eng} engagement)."
+    elif "beauty" in cat_l or "cosmetic" in cat_l:
+        if "skincare" in bio_l or "serum" in bio_l or "barrier" in bio_l or "sunscreen" in bio_l:
+            return f"Suitable for skincare education, ingredient breakdowns, and glowing skin routines with {followers} fans."
+        return f"Suitable for transformative makeup artistry, glam tutorials, and high-impact cosmetic testing ({eng} engagement)."
+    elif "fashion" in cat_l or "model" in cat_l:
+        if "couture" in bio_l or "runway" in bio_l or "luxury" in bio_l or "paris" in bio_l:
+            return f"Suitable for luxury fashion houses, haute couture styling, and runway-tier brand partnerships."
+        return f"Suitable for modern streetwear, trendy outfit lookbooks, and aesthetic lifestyle styling ({eng} engagement)."
+    elif eng_val >= 0.04:
+        return f"Suitable for high-conversion ROI campaigns driven by an outstanding {eng} audience engagement rate."
+    else:
+        return f"Suitable for targeted {cat} partnerships with an active audience of {followers} followers and {eng} engagement."
+
 def clean_creator_output(row: Dict[str, Any], reason: str = "") -> Dict[str, Any]:
     followers_num = float(row.get("followers", 0) or 0)
     eng_num = float(row.get("engagement_rate", 0) or 0)
+    final_reason = reason.strip() if reason and reason.strip() else generate_suitability_reason(row)
     return {
         "username": str(row.get("username", "")).strip().lstrip("@"),
         "full_name": str(row.get("full_name") or row.get("fullName") or row.get("username", "")),
@@ -57,7 +90,7 @@ def clean_creator_output(row: Dict[str, Any], reason: str = "") -> Dict[str, Any
         "engagement_formatted": format_engagement(eng_num),
         "follower_tier": str(row.get("follower_tier") or get_follower_tier(followers_num)),
         "profile_pic_url": str(row.get("profilePicUrl") or row.get("profile_pic_url") or ""),
-        "match_reason": reason
+        "match_reason": final_reason
     }
 
 def search_influencers(
@@ -148,7 +181,13 @@ def search_influencers(
                 "fitness": ["fitness", "gym", "workout", "bodybuilding", "trainer", "athlet", "sport", "health"]
             }
             aliases = cat_aliases.get(cat_target, [cat_target])
-            if not any(a in cat or a in bio for a in aliases):
+            def match_alias(alias: str) -> bool:
+                pattern = rf"\b{re.escape(alias)}\b"
+                if len(alias) <= 3:
+                    return bool(re.search(pattern, cat) or re.search(pattern, bio))
+                return bool(alias in cat or re.search(pattern, bio))
+
+            if not any(match_alias(a) for a in aliases):
                 continue
         if follower_tier and follower_tier.lower() not in f_tier:
             continue
@@ -182,7 +221,8 @@ def search_influencers(
                 keyword_score += 10.0
                 reason = "Content bio keyword match"
 
-            tokens = [t for t in re.findall(r'[a-z0-9]{3,}', q_lower) if len(t) >= 3]
+            stop_words = {"the", "and", "for", "with", "who", "are", "best", "some", "what", "which", "from", "that", "this", "can", "you", "all", "about", "have", "has", "more", "give", "show", "tell", "find", "good", "most"}
+            tokens = [t for t in re.findall(r'[a-z0-9]{3,}', q_lower) if len(t) >= 3 and t not in stop_words]
             for token in tokens:
                 if token in uname:
                     keyword_score += 8.0
@@ -214,7 +254,7 @@ def search_influencers(
     scored_candidates.sort(key=lambda x: x["score"], reverse=True)
 
     if not scored_candidates and raw_query:
-        tokens = [t for t in re.findall(r'[a-z0-9]{3,}', q_lower) if len(t) >= 3]
+        tokens = [t for t in re.findall(r'[a-z0-9]{3,}', q_lower) if len(t) >= 3 and t not in stop_words]
         for idx, row in df.iterrows():
             bio = str(row.get("bio", "")).lower()
             cat = str(row.get("category", "")).lower()
@@ -275,66 +315,92 @@ def get_curated_baseline(top_k: int = 5) -> List[Dict[str, Any]]:
     return results[:top_k]
 
 def get_user_recommendations(user_id: int, top_k: int = 5) -> List[Dict[str, Any]]:
-    searches = database.get_user_recent_searches(user_id, limit=8)
+    searches = database.get_user_recent_searches(user_id, limit=6)
     user_summary = database.get_user_summary(user_id)
-    chat_history = database.get_user_chat_history(user_id, limit=6)
+    chat_history = database.get_user_chat_history(user_id, limit=4)
 
     has_activity = bool(searches or user_summary or chat_history)
     if not has_activity:
         return get_curated_baseline(top_k=top_k)
 
     engine = get_engine()
-    if engine.creators_df.empty:
+    df = engine.creators_df
+    if df.empty:
         return []
 
-    tokens = []
-    reason_topic = ""
-    for idx, s in enumerate(searches):
-        q = s.get("query", "").strip()
-        if q:
-            weight = 3 if idx == 0 else 1
-            tokens.extend([q] * weight)
-            if not reason_topic:
-                reason_topic = q
+    intents = []
+    seen_keys = set()
+    for s in searches:
+        q = (s.get("query") or "").strip()
+        cat = (s.get("category") or "").strip()
+        key = (q.lower(), cat.lower())
+        if (q or cat) and key not in seen_keys:
+            seen_keys.add(key)
+            intents.append({"query": q, "category": cat or None, "source": "search"})
 
-    if user_summary:
-        tokens.append(user_summary)
-        if not reason_topic:
-            reason_topic = user_summary
+    user_msgs = [c.get("content", "").strip() for c in chat_history if c.get("role") == "user" and c.get("content")]
+    for msg in reversed(user_msgs):
+        if msg and msg.lower() not in [i["query"].lower() for i in intents]:
+            intents.append({"query": msg, "category": None, "source": "chat"})
 
-    user_msgs = [c.get("content", "") for c in chat_history if c.get("role") == "user"]
-    if user_msgs:
-        recent_msg = " ".join(user_msgs[-3:])
-        tokens.append(recent_msg)
-        if not reason_topic:
-            reason_topic = user_msgs[-1][:30]
+    if user_summary and user_summary.lower() not in [i["query"].lower() for i in intents]:
+        intents.append({"query": user_summary, "category": None, "source": "summary"})
 
-    combined_context = " ".join(tokens).strip()
-    if not combined_context:
+    if not intents:
         return get_curated_baseline(top_k=top_k)
 
-    search_pack = search_influencers(query=combined_context, top_k=15)
-    candidates = search_pack.get("results", [])
-
-    seen = set()
     final_picks = []
-    for c in candidates:
-        uname = c["username"].lower()
-        if uname in seen:
+    seen_usernames = set()
+
+    for intent_idx, intent in enumerate(intents):
+        q = intent["query"]
+        cat = intent["category"]
+        if not q and not cat:
             continue
-        seen.add(uname)
-        c_copy = dict(c)
-        c_copy["match_reason"] = f"Personalized for you based on '{reason_topic}'"
-        final_picks.append(c_copy)
-        if len(final_picks) == top_k:
+
+        clean_handle = q.lstrip("@").strip().lower()
+        is_creator_handle = (df["username"].str.lower() == clean_handle).any()
+
+        candidates = []
+        if is_creator_handle:
+            raw_sim = engine.recommend_similar_creators(clean_handle, top_k=top_k + 2)
+            for r in raw_sim:
+                if str(r.get("username", "")).lower() != clean_handle:
+                    candidates.append({
+                        "creator": clean_creator_output(r, f"Similar to @{clean_handle} from recent search"),
+                        "score": 10.0
+                    })
+        else:
+            needed = top_k - len(final_picks)
+            if needed <= 0:
+                break
+            alloc = top_k if intent_idx == 0 else max(1, needed)
+            res = search_influencers(query=q, category=cat, top_k=alloc + 3)
+            reason_label = f"Based on your recent search for '{q}'" if intent["source"] == "search" else f"Personalized for '{q}'"
+            for c in res.get("results", []):
+                candidates.append({
+                    "creator": clean_creator_output(c, reason_label),
+                    "score": 5.0 - (intent_idx * 0.5)
+                })
+
+        for item in candidates:
+            c = item["creator"]
+            uname = c["username"].lower()
+            if uname not in seen_usernames:
+                seen_usernames.add(uname)
+                final_picks.append(c)
+                if len(final_picks) >= top_k:
+                    break
+
+        if len(final_picks) >= top_k:
             break
 
     if len(final_picks) < top_k:
         fallback = get_curated_baseline(top_k=top_k)
         for fb in fallback:
             uname = fb["username"].lower()
-            if uname not in seen:
-                seen.add(uname)
+            if uname not in seen_usernames:
+                seen_usernames.add(uname)
                 final_picks.append(fb)
             if len(final_picks) == top_k:
                 break

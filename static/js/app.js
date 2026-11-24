@@ -132,7 +132,19 @@ async function executeSearch(payload) {
         }
 
         renderSearchResults(data.results || [], payload.query);
-        loadPersonalizedRecommendations();
+        if (data.updated_user_recommendations && data.updated_user_recommendations.length > 0) {
+            renderRecommendationsDirect(data.updated_user_recommendations);
+        } else {
+            loadPersonalizedRecommendations();
+        }
+        if (data.user_summary) {
+            const summaryBadge = document.getElementById('userSummaryBadge');
+            if (summaryBadge) {
+                summaryBadge.innerText = data.user_summary;
+                const containerEl = document.getElementById('userSummaryBadgeContainer');
+                if (containerEl) containerEl.style.display = 'inline-flex';
+            }
+        }
     } catch (err) {
         resultsContainer.innerHTML = `
             <div class="empty-state">
@@ -373,7 +385,7 @@ async function loadChatHistory() {
                 <div class="message-row ai-msg">
                     <div class="msg-avatar"><i data-lucide="bot" style="width: 15px; height: 15px;"></i></div>
                     <div class="msg-bubble">
-                        Ask a question about creators, benchmarks, or campaign matches. I'll provide direct, concise answers.
+                        Ask a question about creators, niches, or campaign goals. I'll recommend the best matches with a dedicated one-line suitability reason for each.
                     </div>
                 </div>
             `;
@@ -414,12 +426,21 @@ function appendAiMessage(text, recommendations) {
 
     const safeText = String(text || '').replace(/\n/g, '<br>');
     const recsHtml = recommendations && recommendations.length > 0 ? `
-        <div class="chat-rec-chips">
+        <div class="chat-rec-cards">
             ${recommendations.map(r => `
-                <span class="chat-rec-chip" onclick="showCreatorModal('${escapeHtml(r.username)}')">
-                    <i data-lucide="user" style="width: 12px; height: 12px;"></i>
-                    @${escapeHtml(r.username)} (${escapeHtml(r.category || 'Creator')})
-                </span>
+                <div class="chat-rec-card" onclick="showCreatorModal('${escapeHtml(r.username)}')" title="Click to view full status and metrics">
+                    <div class="chat-rec-card-top">
+                        <span class="chat-rec-handle">
+                            <i data-lucide="user" style="width: 12px; height: 12px;"></i>
+                            @${escapeHtml(r.username)}
+                        </span>
+                        <span class="chat-rec-cat">${escapeHtml(r.category || 'Creator')}</span>
+                        <span class="chat-rec-metric">${escapeHtml(r.followers_formatted || '')} • ${escapeHtml(r.engagement_formatted || '')}</span>
+                    </div>
+                    <div class="chat-rec-reason">
+                        <span class="chat-rec-reason-tag">Why suitable:</span> ${escapeHtml(r.match_reason || 'Strong engagement & verified domain match for your goal')}
+                    </div>
+                </div>
             `).join('')}
         </div>
     ` : '';
