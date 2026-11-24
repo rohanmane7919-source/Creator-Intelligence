@@ -1,5 +1,7 @@
 import os
+import time
 import hashlib
+from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -10,6 +12,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "").strip()
 
 _supabase_client: Optional[Client] = None
+_local_search_history: Dict[int, List[Dict[str, Any]]] = {}
 
 def _get_client() -> Optional[Client]:
     global _supabase_client
@@ -125,33 +128,61 @@ def get_all_users() -> List[Dict[str, Any]]:
     except Exception:
         return []
 
-def record_user_search(user_id: int, query: str, category: str = "", result_count: int = 0) -> bool:
+def record_user_search(user_id: int, query: str = "", category: str = "", result_count: int = 0) -> bool:
     clean_query = query.strip()
-    if not clean_query:
+    clean_category = category.strip()
+    if not clean_query and not clean_category:
         return False
+    entry = {
+        "id": int(time.time() * 1000),
+        "user_id": user_id,
+        "query": clean_query or clean_category,
+        "category": clean_category,
+        "result_count": result_count,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    if user_id not in _local_search_history:
+        _local_search_history[user_id] = []
+    _local_search_history[user_id].insert(0, entry)
+    _local_search_history[user_id] = _local_search_history[user_id][:20]
+
     client = _get_client()
     if not client:
-        return False
+        return True
     try:
         client.table("search_history").insert({
             "user_id": user_id,
-            "query": clean_query,
-            "category": category,
+            "query": clean_query or clean_category,
+            "category": clean_category,
             "result_count": result_count
         }).execute()
         return True
     except Exception:
-        return False
+        return True
 
 def get_user_recent_searches(user_id: int, limit: int = 10) -> List[Dict[str, Any]]:
     client = _get_client()
-    if not client:
-        return []
-    try:
-        res = client.table("search_history").select("id, query, category, result_count, created_at").eq("user_id", user_id).order("id", desc=True).limit(limit).execute()
-        return res.data if res.data else []
-    except Exception:
-        return []
+    db_searches = []
+    if client:
+        try:
+            res = client.table("search_history").select("id, query, category, result_count, created_at").eq("user_id", user_id).order("id", desc=True).limit(limit).execute()
+            db_searches = res.data if res.data else []
+        except Exception:
+            pass
+
+    local_searches = _local_search_history.get(user_id, [])
+    seen = set()
+    merged = []
+    for s in local_searches + db_searches:
+        q_norm = str(s.get("query", "")).strip().lower()
+        cat_norm = str(s.get("category", "")).strip().lower()
+        key = (q_norm, cat_norm)
+        if key not in seen and (q_norm or cat_norm):
+            seen.add(key)
+            merged.append(s)
+        if len(merged) >= limit:
+            break
+    return merged
 
 def get_all_searches(limit: int = 50) -> List[Dict[str, Any]]:
     client = _get_client()
