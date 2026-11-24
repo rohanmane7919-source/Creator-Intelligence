@@ -15,10 +15,6 @@ ENV/
 htmlcov/
 
 # Data artifacts & local databases
-*.pkl
-data/*.pkl
-*.db
-data/*.db
 *.sqlite
 *.sqlite3
 
