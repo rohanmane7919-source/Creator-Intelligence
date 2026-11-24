@@ -374,13 +374,19 @@ async def api_search(req: SearchRequest, request: Request):
         min_engagement=req.min_engagement,
         top_k=req.top_k or 8
     )
-    if req.query and req.query.strip():
+    q_to_record = (req.query or "").strip()
+    cat_to_record = (req.category or "").strip()
+    if q_to_record or cat_to_record:
         database.record_user_search(
             user_id=user_id,
-            query=req.query.strip(),
-            category=req.category or "",
+            query=q_to_record or cat_to_record,
+            category=cat_to_record,
             result_count=search_res.get("count", 0)
         )
+    updated_recs = recommendation.get_user_recommendations(user_id=user_id, top_k=5)
+    summary = database.get_user_summary(user_id) if user else ""
+    search_res["updated_user_recommendations"] = updated_recs
+    search_res["user_summary"] = summary
     return search_res
 
 @app.post("/api/chat")
@@ -450,11 +456,21 @@ async def api_chat(req: ChatRequest, request: Request):
 
     database.save_chat_message(user_id, "user", raw_message)
     database.save_chat_message(user_id, "assistant", ai_reply)
+    database.record_user_search(
+        user_id=user_id,
+        query=raw_message,
+        category="",
+        result_count=len(suggested_influencers)
+    )
 
-    combined_text = f"{raw_message} {existing_summary}".strip()
-    words = re.findall(r"\b[A-Za-z]{3,}\b", combined_text)
-    skip = {"what", "which", "some", "with", "have", "from", "that", "this", "want", "look", "looking", "find", "need", "like", "also", "hello", "help", "who", "are", "the", "best", "for"}
+    words = re.findall(r"\b[A-Za-z]{3,}\b", raw_message)
+    skip = {"what", "which", "some", "with", "have", "from", "that", "this", "want", "look", "looking", "find", "need", "like", "also", "hello", "help", "who", "are", "the", "best", "for", "please", "show", "give", "tell", "top"}
     meaningful = [w.capitalize() for w in words if w.lower() not in skip]
+    if existing_summary:
+        old_words = [w.strip() for w in existing_summary.split(",") if w.strip()]
+        for ow in old_words:
+            if ow not in meaningful:
+                meaningful.append(ow)
     summary_topics = list(dict.fromkeys(meaningful))[:5]
     updated_summary = ", ".join(summary_topics) if summary_topics else existing_summary
     if updated_summary:
