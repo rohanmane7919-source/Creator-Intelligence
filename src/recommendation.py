@@ -148,7 +148,13 @@ def search_influencers(
                 "fitness": ["fitness", "gym", "workout", "bodybuilding", "trainer", "athlet", "sport", "health"]
             }
             aliases = cat_aliases.get(cat_target, [cat_target])
-            if not any(a in cat or a in bio for a in aliases):
+            def match_alias(alias: str) -> bool:
+                pattern = rf"\b{re.escape(alias)}\b"
+                if len(alias) <= 3:
+                    return bool(re.search(pattern, cat) or re.search(pattern, bio))
+                return bool(alias in cat or re.search(pattern, bio))
+
+            if not any(match_alias(a) for a in aliases):
                 continue
         if follower_tier and follower_tier.lower() not in f_tier:
             continue
