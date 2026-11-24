@@ -132,7 +132,19 @@ async function executeSearch(payload) {
         }
 
         renderSearchResults(data.results || [], payload.query);
-        loadPersonalizedRecommendations();
+        if (data.updated_user_recommendations && data.updated_user_recommendations.length > 0) {
+            renderRecommendationsDirect(data.updated_user_recommendations);
+        } else {
+            loadPersonalizedRecommendations();
+        }
+        if (data.user_summary) {
+            const summaryBadge = document.getElementById('userSummaryBadge');
+            if (summaryBadge) {
+                summaryBadge.innerText = data.user_summary;
+                const containerEl = document.getElementById('userSummaryBadgeContainer');
+                if (containerEl) containerEl.style.display = 'inline-flex';
+            }
+        }
     } catch (err) {
         resultsContainer.innerHTML = `
             <div class="empty-state">
