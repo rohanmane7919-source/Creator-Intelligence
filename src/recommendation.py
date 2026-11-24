@@ -275,66 +275,92 @@ def get_curated_baseline(top_k: int = 5) -> List[Dict[str, Any]]:
     return results[:top_k]
 
 def get_user_recommendations(user_id: int, top_k: int = 5) -> List[Dict[str, Any]]:
-    searches = database.get_user_recent_searches(user_id, limit=8)
+    searches = database.get_user_recent_searches(user_id, limit=6)
     user_summary = database.get_user_summary(user_id)
-    chat_history = database.get_user_chat_history(user_id, limit=6)
+    chat_history = database.get_user_chat_history(user_id, limit=4)
 
     has_activity = bool(searches or user_summary or chat_history)
     if not has_activity:
         return get_curated_baseline(top_k=top_k)
 
     engine = get_engine()
-    if engine.creators_df.empty:
+    df = engine.creators_df
+    if df.empty:
         return []
 
-    tokens = []
-    reason_topic = ""
-    for idx, s in enumerate(searches):
-        q = s.get("query", "").strip()
-        if q:
-            weight = 3 if idx == 0 else 1
-            tokens.extend([q] * weight)
-            if not reason_topic:
-                reason_topic = q
+    intents = []
+    seen_keys = set()
+    for s in searches:
+        q = (s.get("query") or "").strip()
+        cat = (s.get("category") or "").strip()
+        key = (q.lower(), cat.lower())
+        if (q or cat) and key not in seen_keys:
+            seen_keys.add(key)
+            intents.append({"query": q, "category": cat or None, "source": "search"})
 
-    if user_summary:
-        tokens.append(user_summary)
-        if not reason_topic:
-            reason_topic = user_summary
+    user_msgs = [c.get("content", "").strip() for c in chat_history if c.get("role") == "user" and c.get("content")]
+    for msg in reversed(user_msgs):
+        if msg and msg.lower() not in [i["query"].lower() for i in intents]:
+            intents.append({"query": msg, "category": None, "source": "chat"})
 
-    user_msgs = [c.get("content", "") for c in chat_history if c.get("role") == "user"]
-    if user_msgs:
-        recent_msg = " ".join(user_msgs[-3:])
-        tokens.append(recent_msg)
-        if not reason_topic:
-            reason_topic = user_msgs[-1][:30]
+    if user_summary and user_summary.lower() not in [i["query"].lower() for i in intents]:
+        intents.append({"query": user_summary, "category": None, "source": "summary"})
 
-    combined_context = " ".join(tokens).strip()
-    if not combined_context:
+    if not intents:
         return get_curated_baseline(top_k=top_k)
 
-    search_pack = search_influencers(query=combined_context, top_k=15)
-    candidates = search_pack.get("results", [])
-
-    seen = set()
     final_picks = []
-    for c in candidates:
-        uname = c["username"].lower()
-        if uname in seen:
+    seen_usernames = set()
+
+    for intent_idx, intent in enumerate(intents):
+        q = intent["query"]
+        cat = intent["category"]
+        if not q and not cat:
             continue
-        seen.add(uname)
-        c_copy = dict(c)
-        c_copy["match_reason"] = f"Personalized for you based on '{reason_topic}'"
-        final_picks.append(c_copy)
-        if len(final_picks) == top_k:
+
+        clean_handle = q.lstrip("@").strip().lower()
+        is_creator_handle = (df["username"].str.lower() == clean_handle).any()
+
+        candidates = []
+        if is_creator_handle:
+            raw_sim = engine.recommend_similar_creators(clean_handle, top_k=top_k + 2)
+            for r in raw_sim:
+                if str(r.get("username", "")).lower() != clean_handle:
+                    candidates.append({
+                        "creator": clean_creator_output(r, f"Similar to @{clean_handle} from recent search"),
+                        "score": 10.0
+                    })
+        else:
+            needed = top_k - len(final_picks)
+            if needed <= 0:
+                break
+            alloc = top_k if intent_idx == 0 else max(1, needed)
+            res = search_influencers(query=q, category=cat, top_k=alloc + 3)
+            reason_label = f"Based on your recent search for '{q}'" if intent["source"] == "search" else f"Personalized for '{q}'"
+            for c in res.get("results", []):
+                candidates.append({
+                    "creator": clean_creator_output(c, reason_label),
+                    "score": 5.0 - (intent_idx * 0.5)
+                })
+
+        for item in candidates:
+            c = item["creator"]
+            uname = c["username"].lower()
+            if uname not in seen_usernames:
+                seen_usernames.add(uname)
+                final_picks.append(c)
+                if len(final_picks) >= top_k:
+                    break
+
+        if len(final_picks) >= top_k:
             break
 
     if len(final_picks) < top_k:
         fallback = get_curated_baseline(top_k=top_k)
         for fb in fallback:
             uname = fb["username"].lower()
-            if uname not in seen:
-                seen.add(uname)
+            if uname not in seen_usernames:
+                seen_usernames.add(uname)
                 final_picks.append(fb)
             if len(final_picks) == top_k:
                 break
